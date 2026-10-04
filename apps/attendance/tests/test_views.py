@@ -27,6 +27,32 @@ class AttendanceViewTests(TestCase):
         response = self.client.get(reverse("attendance:roll"))
         self.assertContains(response, "2026-10-03")
 
+    @patch("apps.core.dates.local_today", return_value=date(2026, 10, 5))
+    def test_coming_sabbath_cannot_be_saved_before_that_day(self, _today):
+        response = self.client.post(
+            reverse("attendance:roll"),
+            {"date": "2026-10-10", f"status_{self.child.pk}": "PRESENT"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "cannot be saved until that day")
+        self.assertContains(response, "This date has not arrived yet")
+        self.assertNotContains(response, "Save attendance")
+        self.assertFalse(
+            Attendance.objects.filter(child=self.child, date=date(2026, 10, 10)).exists()
+        )
+
+    @patch("apps.core.dates.local_today", return_value=date(2026, 10, 5))
+    def test_weekday_after_today_cannot_be_saved(self, _today):
+        response = self.client.post(
+            reverse("attendance:roll"),
+            {"date": "2026-10-06", f"status_{self.child.pk}": "ABSENT"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            Attendance.objects.filter(child=self.child, date=date(2026, 10, 6)).exists()
+        )
+
     @patch("apps.core.dates.local_today", return_value=date(2026, 10, 3))
     def test_teacher_can_record_attendance(self, _today):
         response = self.client.post(
@@ -37,6 +63,16 @@ class AttendanceViewTests(TestCase):
         record = Attendance.objects.get(child=self.child, date=date(2026, 10, 3))
         self.assertEqual(record.status, Attendance.Status.PRESENT)
         self.assertEqual(record.recorded_by, self.teacher)
+
+    @patch("apps.core.dates.local_today", return_value=date(2026, 10, 3))
+    def test_past_sabbath_can_still_be_saved(self, _today):
+        response = self.client.post(
+            reverse("attendance:roll"),
+            {"date": "2026-09-26", f"status_{self.child.pk}": "ABSENT"},
+        )
+        self.assertEqual(response.status_code, 302)
+        record = Attendance.objects.get(child=self.child, date=date(2026, 9, 26))
+        self.assertEqual(record.status, Attendance.Status.ABSENT)
 
     def test_duplicate_attendance_is_rejected(self):
         Attendance.objects.create(

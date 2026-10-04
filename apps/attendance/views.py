@@ -40,6 +40,7 @@ def roll(request):
             "Choose the coming Sabbath or an earlier date. Later dates are not open yet.",
         )
         selected = default_date
+    is_future = selected > today
 
     children = list(
         Child.objects.filter(status=Child.Status.ACTIVE)
@@ -59,10 +60,17 @@ def roll(request):
             ["attendance.add_attendance", "attendance.change_attendance"]
         ):
             raise PermissionDenied
-        _save_roll(children, request.POST, selected, request.user)
-        messages.success(
-            request, f"Attendance for {date_format(selected, 'l, j F Y')} has been saved."
-        )
+        if is_future:
+            when = date_format(selected, "l, j F Y")
+            messages.error(
+                request,
+                f"Attendance for {when} cannot be saved until that day.",
+            )
+        else:
+            _save_roll(children, request.POST, selected, request.user)
+            messages.success(
+                request, f"Attendance for {date_format(selected, 'l, j F Y')} has been saved."
+            )
         division = _sabbath_division(request.POST.get("division"))
         target = f"{reverse('attendance:roll')}?date={selected.isoformat()}"
         if division:
@@ -85,6 +93,7 @@ def roll(request):
         "attendance/roll.html",
         {
             "selected": selected,
+            "is_future": is_future,
             "children": children,
             "existing": existing,
             "stats": sabbath_stats(selected),

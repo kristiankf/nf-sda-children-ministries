@@ -76,6 +76,8 @@ Saturday is weekday 5 in Python (`date.weekday()`). "This Sabbath" on the attend
 
 That rule crosses month ends, year ends, and leap days. The clock is `Africa/Accra` via `timezone.localdate()`, not the server's default zone.
 
+The roll can be opened through that coming Sabbath. A date after today cannot be saved. Saving stays closed until that day in Accra.
+
 ## Missing church
 
 `consecutive_absence_weeks` walks a child's attendance rows that fall on a Saturday on or before the cutoff, newest first.

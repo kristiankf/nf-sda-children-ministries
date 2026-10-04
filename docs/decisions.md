@@ -22,7 +22,7 @@ Gunicorn does not serve static files. WhiteNoise does that inside the Django con
 
 ## Sabbath and two statuses
 
-The congregation worships on Saturday. The roll's default date is the Saturday of the current or coming week in Accra. Only present and absent are recorded. Excused, late, and partial were dropped so the Sabbath screen stays a single choice.
+The congregation worships on Saturday. The roll's default date is the Saturday of the current or coming week in Accra. A date after today can be opened, and it cannot be saved until that day. Only present and absent are recorded. Excused, late, and partial were dropped so the Sabbath screen stays a single choice.
 
 ## Unrecorded is not absent
 

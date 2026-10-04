@@ -16,7 +16,7 @@ Use explicit dates. Patch `apps.core.dates.local_today` when a view reads "today
 | Month boundary, year boundary, leap day | same |
 | Accra time zone | same |
 | Present breaks a streak; missing rows are not absences; future and non-Saturday rows are ignored | `apps/attendance/tests/test_streaks.py` |
-| Roll opens on the coming Sabbath; teacher can save; duplicate child/date is rejected; anonymous users are redirected | `apps/attendance/tests/test_views.py` |
+| Roll opens on the coming Sabbath; a future date cannot be saved; teacher can save today or a past Sabbath; duplicate child/date is rejected; anonymous users are redirected | `apps/attendance/tests/test_views.py` |
 | Dashboard names a child and the week count | same |
 | Create and update a child, class placement, future date of birth, search by name, phone, and school, teacher forbidden, photo type | `apps/children/tests/test_children.py` |
 | Age, leap-day birthday, month filter | `apps/children/tests/test_birthdays.py` |
