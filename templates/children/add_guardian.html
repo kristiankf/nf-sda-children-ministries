@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load ministry_tags %}
+{% block title %}Add parent or guardian{% endblock %}
+{% block content %}
+  <p class="text-sm text-muted">{{ child.short_name }}</p>
+  <h1 class="text-2xl font-semibold">Add a parent or guardian</h1>
+
+  <form class="mt-4" method="get"
+        hx-get="{% url 'children:add_guardian' child.pk %}"
+        hx-target="#parent-matches"
+        hx-swap="innerHTML"
+        hx-trigger="keyup changed delay:300ms from:input">
+    <label class="field-label" for="parent-search">Find an existing person</label>
+    <input class="field-input" id="parent-search" type="search" name="q" value="{{ search_term }}" placeholder="Name or phone">
+  </form>
+  <div id="parent-matches" class="mt-3">
+    {% include "children/partials/parent_matches.html" %}
+  </div>
+
+  <form class="card mt-4" method="post">
+    {% csrf_token %}
+    <h2 class="mb-3 text-lg font-semibold">Link someone already saved</h2>
+    {% include "includes/field.html" with field=link_form.parent %}
+    {% include "includes/field.html" with field=link_form.relationship %}
+    <button class="btn-primary" type="submit" name="action" value="link">Link to {{ child.short_name }}</button>
+  </form>
+
+  <form class="card mt-3" method="post">
+    {% csrf_token %}
+    <h2 class="mb-3 text-lg font-semibold">Or add someone new</h2>
+    {% for field in new_form %}
+      {% include "includes/field.html" %}
+    {% endfor %}
+    <button class="btn-primary" type="submit" name="action" value="create">Save and link</button>
+  </form>
+{% endblock %}

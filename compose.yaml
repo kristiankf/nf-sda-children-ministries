@@ -1,0 +1,35 @@
+# Development environment: Django and PostgreSQL only.
+services:
+  db:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ministry}
+      POSTGRES_USER: ${POSTGRES_USER:-ministry}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ministry}
+    volumes:
+      # PostgreSQL 18 stores data under /var/lib/postgresql/18/docker.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5433:5432"
+
+  web:
+    build:
+      context: .
+      target: development
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

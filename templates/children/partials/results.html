@@ -1,0 +1,50 @@
+{% load ministry_tags %}
+<div id="child-results" class="mt-4">
+  {% if children %}
+    <ul class="space-y-2">
+      {% for child in children %}
+        <li>
+          <a class="card block" href="{{ child.get_absolute_url }}">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-lg font-semibold">{{ child.full_name }}</p>
+                {% if child.preferred_name and child.preferred_name != child.first_name %}
+                  <p class="text-sm text-muted">Called {{ child.preferred_name }}</p>
+                {% endif %}
+              </div>
+              <p class="shrink-0 text-sm font-semibold text-muted">{{ child.date_of_birth|years_old }} yrs</p>
+            </div>
+            <p class="mt-1 text-sm font-semibold text-primary">
+              {% if child.sabbath_class %}{{ child.sabbath_class.name }}{% else %}No Sabbath class{% endif %}{% if child.youth_group %} · {{ child.youth_group.name }}{% endif %}
+            </p>
+            <p class="text-sm text-muted">
+              {% if child.class_level %}{{ child.get_class_level_display }}{% if child.school_name %} · {{ child.school_name }}{% endif %}{% elif child.school_name %}{{ child.school_name }}{% else %}No class yet{% endif %}
+            </p>
+            {% with guardian=child.guardians.all.0 %}
+              {% if guardian %}
+                <p class="mt-2 text-sm">{{ guardian.get_relationship_display }}: {{ guardian.parent.full_name }} · {{ guardian.parent.phone_primary|phone }}</p>
+              {% endif %}
+            {% endwith %}
+            {% if child.status != "ACTIVE" %}
+              <p class="mt-2 text-sm font-semibold">{{ child.get_status_display }}</p>
+            {% endif %}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% include "includes/pagination.html" with hx_target="#child-results" hx_url=request.path %}
+  {% else %}
+    <div class="card">
+      {% if request.GET.q or request.GET.class_level or request.GET.gender or request.GET.age_min or request.GET.age_max or request.GET.division or request.GET.youth %}
+        <h2 class="text-xl font-semibold">No children match</h2>
+        <p class="mt-2 text-muted">Try a different name, phone number, class, or filter.</p>
+      {% else %}
+        <h2 class="text-xl font-semibold">No children yet</h2>
+        <p class="mt-2 text-muted">Add your first child to start building the Children's Ministries records.</p>
+      {% endif %}
+      {% if can_manage_records %}
+        <a class="btn-primary mt-4" href="{% url 'children:create' %}">+ Add child</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Children report{% endblock %}
+{% block content %}
+  <a class="btn-quiet" href="{% url 'reports' %}">Reports</a>
+  <h1 class="mt-2 text-2xl font-semibold">Children</h1>
+  <p class="mt-1 text-sm text-muted">Counts follow the filters. Tap a total to narrow the report.</p>
+
+  <section class="card mt-4" aria-labelledby="children-total">
+    <p id="children-total" class="text-sm font-bold uppercase tracking-wide text-accent">Children</p>
+    <p class="text-4xl font-semibold">{{ total }}</p>
+  </section>
+
+  <details class="mt-4">
+    <summary class="cursor-pointer py-2 text-sm font-bold text-primary">Filters</summary>
+    <form class="mt-3 grid gap-3" method="get">
+    <div>
+      <label class="field-label" for="report-division">Sabbath class</label>
+      <select class="field-input" id="report-division" name="division">
+        <option value="">All Sabbath classes</option>
+        {% for band in sabbath_classes %}
+          <option value="{{ band.slug }}" {% if request.GET.division == band.slug %}selected{% endif %}>{{ band.name }}</option>
+        {% endfor %}
+        <option value="none" {% if request.GET.division == "none" %}selected{% endif %}>No Sabbath class</option>
+      </select>
+    </div>
+    <div>
+      <label class="field-label" for="report-youth">Youth group</label>
+      <select class="field-input" id="report-youth" name="youth">
+        <option value="">All youth groups</option>
+        {% for band in youth_groups %}
+          <option value="{{ band.slug }}" {% if request.GET.youth == band.slug %}selected{% endif %}>{{ band.name }}</option>
+        {% endfor %}
+        <option value="none" {% if request.GET.youth == "none" %}selected{% endif %}>No youth group</option>
+      </select>
+    </div>
+    <div>
+      <label class="field-label" for="report-class">Class</label>
+      <select class="field-input" id="report-class" name="class_level">
+        <option value="">All classes</option>
+        {% for value, label in class_levels %}
+          <option value="{{ value }}" {% if request.GET.class_level == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+        <option value="none" {% if request.GET.class_level == "none" %}selected{% endif %}>No class yet</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="field-label" for="report-gender">Gender</label>
+        <select class="field-input" id="report-gender" name="gender">
+          <option value="">All</option>
+          {% for value, label in genders %}
+            <option value="{{ value }}" {% if request.GET.gender == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="report-status">Status</label>
+        <select class="field-input" id="report-status" name="status">
+          <option value="all" {% if request.GET.status == "all" %}selected{% endif %}>All</option>
+          {% for value, label in statuses %}
+            <option value="{{ value }}" {% if request.GET.status == value or not request.GET.status and value == "ACTIVE" %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" for="report-age-min">Minimum age</label>
+        <input class="field-input" id="report-age-min" name="age_min" inputmode="numeric" value="{{ request.GET.age_min }}">
+      </div>
+      <div>
+        <label class="field-label" for="report-age-max">Maximum age</label>
+        <input class="field-input" id="report-age-max" name="age_max" inputmode="numeric" value="{{ request.GET.age_max }}">
+      </div>
+    </div>
+    <button class="btn-primary" type="submit">Update totals</button>
+    </form>
+  </details>
+
+  <section class="mt-4" aria-labelledby="sabbath-totals">
+    <h2 id="sabbath-totals" class="text-lg font-semibold">Sabbath classes</h2>
+    <ul class="mt-2 grid gap-2">
+      {% for row in sabbath_rows %}
+        <li>
+          <a class="card flex items-center justify-between gap-3 {% if row.selected %}ring-2 ring-primary{% endif %}" href="?{{ row.query }}">
+            <span class="flex min-w-0 items-center gap-3 font-semibold">
+              <span class="band-dot tone-{{ row.color }}" aria-hidden="true"></span>
+              {{ row.label }}
+            </span>
+            <span class="text-2xl font-semibold">{{ row.count }}</span>
+          </a>
+        </li>
+      {% endfor %}
+      {% if no_sabbath %}
+        <li>
+          <a class="card flex items-center justify-between gap-3 {% if request.GET.division == 'none' %}ring-2 ring-primary{% endif %}" href="?{{ no_sabbath_query }}">
+            <span class="font-semibold">No Sabbath class</span>
+            <span class="text-2xl font-semibold">{{ no_sabbath }}</span>
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+  </section>
+
+  <section class="mt-4" aria-labelledby="youth-totals">
+    <h2 id="youth-totals" class="text-lg font-semibold">Youth groups</h2>
+    <ul class="mt-2 grid gap-2">
+      {% for row in youth_rows %}
+        <li>
+          <a class="card flex items-center justify-between gap-3 {% if row.selected %}ring-2 ring-primary{% endif %}" href="?{{ row.query }}">
+            <span class="flex min-w-0 items-center gap-3 font-semibold">
+              <span class="band-dot tone-{{ row.color }}" aria-hidden="true"></span>
+              {{ row.label }}
+            </span>
+            <span class="text-2xl font-semibold">{{ row.count }}</span>
+          </a>
+        </li>
+      {% endfor %}
+      <li>
+        <a class="card flex items-center justify-between gap-3 {% if request.GET.youth == 'none' %}ring-2 ring-primary{% endif %}" href="?{{ no_youth_query }}">
+          <span class="font-semibold">No youth group</span>
+          <span class="text-2xl font-semibold">{{ no_youth }}</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="mt-4" aria-labelledby="gender-totals">
+    <h2 id="gender-totals" class="text-lg font-semibold">Gender</h2>
+    <ul class="mt-2 grid gap-2">
+      {% for row in gender_rows %}
+        <li>
+          <a class="card flex items-center justify-between gap-3 {% if row.selected %}ring-2 ring-primary{% endif %}" href="?{{ row.query }}">
+            <span class="font-semibold">{{ row.label }}</span>
+            <span class="text-2xl font-semibold">{{ row.count }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="mt-4" aria-labelledby="class-totals">
+    <h2 id="class-totals" class="text-lg font-semibold">Classes</h2>
+    {% if class_rows %}
+      <ul class="mt-2 grid gap-2">
+        {% for row in class_rows %}
+          <li>
+            <a class="card flex items-center justify-between gap-3 {% if row.selected %}ring-2 ring-primary{% endif %}" href="?{{ row.query }}">
+              <span class="font-semibold">{{ row.label }}</span>
+              <span class="text-2xl font-semibold">{{ row.count }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card mt-2"><p>No children match these filters.</p></div>
+    {% endif %}
+  </section>
+
+  <a class="btn-quiet" href="{% url 'report_children_csv' %}?{{ request.GET.urlencode }}">Download these children</a>
+{% endblock %}

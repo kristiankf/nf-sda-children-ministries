@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{% if group %}Edit {{ group.name }}{% else %}Add a {{ singular }}{% endif %}{% endblock %}
+{% block content %}
+  <a class="btn-quiet" href="{% url list_url %}">{{ title }}</a>
+  <h1 class="mt-2 text-2xl font-semibold">{% if group %}Edit {{ group.name }}{% else %}Add a {{ singular }}{% endif %}</h1>
+  <form class="mt-4" method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="mb-4" role="alert">
+        {% for error in form.non_field_errors %}
+          <p class="text-sm font-semibold text-absent">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% include "includes/field.html" with field=form.name %}
+    {% include "includes/field.html" with field=form.min_years %}
+    {% include "includes/field.html" with field=form.max_years %}
+    <fieldset class="mb-4">
+      <legend class="field-label">Color</legend>
+      <div class="color-choices">
+        {% for radio in form.color %}
+          <label class="color-swatch tone-{{ radio.data.value }}">{{ radio.tag }} {{ radio.choice_label }}</label>
+        {% endfor %}
+      </div>
+      {% for error in form.color.errors %}
+        <p class="mt-1 text-sm font-semibold text-absent" role="alert">{{ error }}</p>
+      {% endfor %}
+    </fieldset>
+    <button class="btn-primary" type="submit">Save</button>
+  </form>
+{% endblock %}

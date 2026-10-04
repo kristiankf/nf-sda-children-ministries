@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+  <p class="text-sm text-muted">{{ today|date:"l, j F Y" }}{% if academic_year %} · {{ academic_year.name }}{% endif %}</p>
+  <h1 class="mt-1 text-3xl font-semibold tracking-tight">{{ greeting }}</h1>
+
+  <section class="card mt-5" aria-labelledby="sabbath-heading">
+    <p class="text-xs font-bold uppercase tracking-wide text-accent">This Sabbath</p>
+    <h2 id="sabbath-heading" class="mt-1 text-xl font-semibold">{{ sabbath|date:"l, j F Y" }}</h2>
+    {% if stats.is_recorded %}
+      <dl class="mt-4 grid grid-cols-3 gap-2 text-center">
+        <div class="rounded-xl bg-present-soft px-2 py-3">
+          <dt class="text-sm font-medium text-present">Present</dt>
+          <dd class="text-3xl font-semibold text-present">{{ stats.present }}</dd>
+        </div>
+        <div class="rounded-xl bg-absent-soft px-2 py-3">
+          <dt class="text-sm font-medium text-absent">Absent</dt>
+          <dd class="text-3xl font-semibold text-absent">{{ stats.absent }}</dd>
+        </div>
+        <div class="rounded-xl bg-paper px-2 py-3">
+          <dt class="text-sm font-medium text-muted">Children</dt>
+          <dd class="text-3xl font-semibold">{{ stats.active_children }}</dd>
+        </div>
+      </dl>
+      {% if stats.unmarked %}
+        <p class="mt-3 text-sm text-muted">{{ stats.unmarked }} still not marked.</p>
+      {% endif %}
+    {% else %}
+      <p class="mt-3 text-base">Attendance has not been recorded for this Sabbath yet.</p>
+    {% endif %}
+    {% if can_take_attendance %}
+      <a class="btn-primary mt-4" href="{% url 'attendance:roll' %}?date={{ sabbath|date:'Y-m-d' }}">Take attendance</a>
+    {% endif %}
+    {% if class_counts %}
+      <div class="division-row mt-4">
+        {% for row in class_counts %}
+          <a class="division-card tone-{{ row.band.color }}" href="{% url 'attendance:roll' %}?date={{ sabbath|date:'Y-m-d' }}&division={{ row.band.slug }}">
+            <span class="division-count">{{ row.count }}</span>
+            <span class="division-name">{{ row.band.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if ready_count %}
+      <p class="mt-3 text-sm font-semibold">
+        <a href="{% url 'children:list' %}?division={{ graduation_slug }}">{{ ready_count }} ready to graduate</a>
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="mt-4" aria-labelledby="missing-heading">
+    <div class="mb-2 flex items-end justify-between gap-3">
+      <h2 id="missing-heading" class="text-lg font-semibold">Missing church</h2>
+      <a class="btn-quiet" href="{% url 'attendance:missing' %}">View all</a>
+    </div>
+    {% if missing %}
+      <ul class="card divide-y divide-line p-0">
+        {% for row in missing %}
+          <li class="flex items-center gap-2 px-4 py-3">
+            <a class="min-w-0 grow font-semibold" href="{% url 'children:detail' row.child_id %}">{{ row.name }}</a>
+            <span class="shrink-0 rounded-full bg-warn-soft px-3 py-1 text-sm font-bold text-warn">{{ row.weeks }} week{{ row.weeks|pluralize }}</span>
+            {% if row.parent_phone %}
+              <a class="btn-secondary w-auto shrink-0 px-3" href="tel:{{ row.parent_phone }}" aria-label="Call {{ row.parent_name }}">Call</a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card">
+        <p class="font-semibold">No one has missed two Sabbaths in a row.</p>
+        <p class="mt-1 text-sm text-muted">This only counts Sabbaths that were actually marked absent.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="mt-4" aria-labelledby="birthday-heading">
+    <div class="mb-2 flex items-end justify-between gap-3">
+      <h2 id="birthday-heading" class="text-lg font-semibold">Upcoming birthdays</h2>
+      <a class="btn-quiet" href="{% url 'report_birthdays' %}">View birthdays</a>
+    </div>
+    {% if birthdays %}
+      <ul class="card divide-y divide-line p-0">
+        {% for row in birthdays %}
+          <li>
+            <a class="flex items-center justify-between gap-3 px-4 py-3" href="{{ row.child.get_absolute_url }}">
+              <span class="font-semibold">{{ row.child.short_name }}</span>
+              <span class="text-sm font-medium text-muted">
+                {% if row.days == 0 %}Today{% elif row.days == 1 %}Tomorrow{% else %}{{ row.date|date:"j M" }}{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card">
+        <p class="font-semibold">No birthdays in the next 30 days.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="mt-4" aria-labelledby="actions-heading">
+    <h2 id="actions-heading" class="mb-2 text-lg font-semibold">Quick actions</h2>
+    <div class="grid gap-2">
+      {% if can_manage_records %}
+        <a class="btn-secondary" href="{% url 'children:create' %}">+ Add child</a>
+      {% endif %}
+      {% if can_take_attendance %}
+        <a class="btn-secondary" href="{% url 'attendance:roll' %}">Take attendance</a>
+      {% endif %}
+      <a class="btn-secondary" href="{% url 'children:list' %}">Search children</a>
+    </div>
+  </section>
+{% endblock %}

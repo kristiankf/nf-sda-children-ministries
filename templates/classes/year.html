@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Academic year{% endblock %}
+{% block content %}
+  <a class="btn-quiet" href="{% url 'classes:list' %}">Classes</a>
+  <h1 class="mt-2 text-2xl font-semibold">{{ object.name }}</h1>
+  <p class="mt-1 text-sm text-muted">A new year starts on 1 September and ends on 31 August. Change either date when this year is different. The day after the end date, every active child moves up one class.</p>
+  <form class="mt-4" method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="mb-4" role="alert">
+        {% for error in form.non_field_errors %}
+          <p class="text-sm font-semibold text-absent">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <section class="card mb-3">
+      {% include "includes/field.html" with field=form.start_date %}
+      {% include "includes/field.html" with field=form.end_date %}
+    </section>
+    <button class="btn-primary" type="submit">Save dates</button>
+  </form>
+{% endblock %}

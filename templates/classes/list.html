@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Classes{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Classes</h1>
+  {% if academic_year %}
+    <section class="card mt-4" aria-labelledby="year-heading">
+      <h2 id="year-heading" class="text-sm font-bold uppercase tracking-wide text-accent">Academic year</h2>
+      <p class="mt-1 text-lg font-semibold">{{ academic_year.name }}</p>
+      <p class="text-sm text-muted">{{ academic_year.start_date|date:"j F Y" }} – {{ academic_year.end_date|date:"j F Y" }}</p>
+      <p class="mt-2 text-sm text-muted">On the day after {{ academic_year.end_date|date:"j F Y" }}, each active child moves up one class. A child in SHS 3 stays in SHS 3.</p>
+      {% if can_manage_academic_year %}
+        <a class="btn-secondary mt-4" href="{% url 'classes:year' %}">Edit dates</a>
+      {% endif %}
+    </section>
+  {% endif %}
+  <ul class="mt-4 space-y-2">
+    {% for level in levels %}
+      <li>
+        <a class="card flex items-center justify-between gap-3" href="{% url 'children:list' %}?class_level={{ level.value }}">
+          <span class="font-semibold">{{ level.label }}</span>
+          <span class="text-2xl font-semibold">{{ level.count }}</span>
+        </a>
+      </li>
+    {% endfor %}
+    <li>
+      <a class="card flex items-center justify-between gap-3" href="{% url 'children:list' %}?class_level=none">
+        <span class="font-semibold">No class yet</span>
+        <span class="text-2xl font-semibold">{{ without_class }}</span>
+      </a>
+    </li>
+  </ul>
+{% endblock %}

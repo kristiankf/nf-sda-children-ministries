@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load ministry_tags %}
+{% block title %}{{ child.full_name }}{% endblock %}
+{% block content %}
+  <div class="flex items-start gap-3">
+    {% if child.photo %}
+      <img class="size-16 rounded-full object-cover" src="{% url 'children:photo' child.pk %}" alt="">
+    {% else %}
+      <div class="flex size-16 items-center justify-center rounded-full bg-primary text-lg font-bold text-white" aria-hidden="true">{{ child.initials }}</div>
+    {% endif %}
+    <div class="min-w-0">
+      <h1 class="text-2xl font-semibold leading-tight">{{ child.full_name }}</h1>
+      {% if child.preferred_name %}
+        <p class="text-muted">Called {{ child.preferred_name }}</p>
+      {% endif %}
+      <p class="mt-1 text-sm font-medium">{{ child.get_status_display }} · {{ child.get_gender_display }}</p>
+    </div>
+  </div>
+
+  <section class="card mt-4" aria-labelledby="profile-heading">
+    <h2 id="profile-heading" class="text-lg font-semibold">About</h2>
+    <dl class="mt-3 space-y-2 text-sm">
+      <div class="flex justify-between gap-3"><dt class="text-muted">Age</dt><dd class="font-semibold">{{ child.age }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Birthday</dt><dd class="font-semibold">{{ child.date_of_birth|date:"j F" }}</dd></div>
+      {% if child.phone %}
+        <div class="flex justify-between gap-3">
+          <dt class="text-muted">Phone</dt>
+          <dd class="font-semibold"><a href="tel:{{ child.phone }}">{{ child.phone|phone }}</a></dd>
+        </div>
+      {% endif %}
+      <div class="flex justify-between gap-3">
+        <dt class="text-muted">Next birthday</dt>
+        <dd class="text-right font-semibold">
+          {% if days_until_birthday == 0 %}Today · turns {{ child.age }}{% else %}{{ next_birthday|date:"j F" }} · {{ days_until_birthday }} day{{ days_until_birthday|pluralize }}{% endif %}
+        </dd>
+      </div>
+    </dl>
+    {% if child.address %}
+      <p class="mt-3 text-sm">{{ child.address|linebreaksbr }}</p>
+    {% endif %}
+  </section>
+
+  <section class="card mt-3" aria-labelledby="sabbath-class-heading">
+    <h2 id="sabbath-class-heading" class="text-lg font-semibold">Sabbath class</h2>
+    {% if child.sabbath_class %}
+      <p class="mt-2 text-lg font-semibold">{{ child.sabbath_class.name }}</p>
+      <p class="text-sm text-muted">{{ child.sabbath_class.age_label }}</p>
+      {% if child.youth_group %}
+        <p class="mt-3 text-sm font-bold uppercase tracking-wide text-accent">{{ child.youth_group.name }}</p>
+        <p class="text-sm text-muted">{{ child.youth_group.age_label }}</p>
+      {% else %}
+        <p class="mt-3 text-sm text-muted">No Adventurer or Pathfinder group yet.</p>
+      {% endif %}
+      {% if child.sabbath_class_override_id and child.calculated_sabbath_class %}
+        <p class="mt-3 text-sm text-muted">Placed here by a coordinator. The birthday would put {{ child.short_name }} in {{ child.calculated_sabbath_class.name }}.</p>
+      {% endif %}
+      {% if can_graduate and perms.children.change_child %}
+        <a class="btn-secondary mt-4" href="{% url 'children:graduate' child.pk %}">Graduate</a>
+      {% endif %}
+    {% else %}
+      <p class="mt-2 text-muted">The Sabbath class appears once the date of birth is saved.</p>
+    {% endif %}
+  </section>
+
+  <section class="card mt-3" aria-labelledby="class-heading">
+    <h2 id="class-heading" class="text-lg font-semibold">Class</h2>
+    {% if child.class_level %}
+      <p class="mt-2 text-lg font-semibold">{{ child.get_class_level_display }}</p>
+    {% else %}
+      <p class="mt-2 text-muted">No class yet.</p>
+    {% endif %}
+    {% if child.school_name %}
+      <p class="text-muted">{{ child.school_name }}</p>
+    {% endif %}
+    {% if earlier_placements %}
+      <h3 class="mt-4 text-sm font-bold uppercase tracking-wide text-accent">Earlier years</h3>
+      <ul class="mt-2 space-y-1 text-sm">
+        {% for placement in earlier_placements %}
+          <li>{{ placement.academic_year.name }} · {{ placement.get_class_level_display }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
+  <section class="mt-3" aria-labelledby="guardians-heading">
+    <div class="mb-2 flex items-end justify-between">
+      <h2 id="guardians-heading" class="text-lg font-semibold">Parents and guardians</h2>
+      {% if perms.parents.add_childguardian %}
+        <a class="btn-quiet" href="{% url 'children:add_guardian' child.pk %}">Add</a>
+      {% endif %}
+    </div>
+    {% if child.guardians.all %}
+      <ul class="space-y-2">
+        {% for link in child.guardians.all %}
+          <li class="card">
+            <p class="text-sm font-bold uppercase tracking-wide text-accent">{{ link.get_relationship_display }}</p>
+            <p class="text-lg font-semibold"><a href="{{ link.parent.get_absolute_url }}">{{ link.parent.full_name }}</a></p>
+            <p><a href="tel:{{ link.parent.phone_primary }}">{{ link.parent.phone_primary|phone }}</a></p>
+            {% if link.parent.phone_secondary %}
+              <p><a href="tel:{{ link.parent.phone_secondary }}">{{ link.parent.phone_secondary|phone }}</a></p>
+            {% endif %}
+            {% if perms.parents.delete_childguardian %}
+              <a class="btn-quiet mt-1" href="{% url 'children:remove_guardian' child.pk link.pk %}">Remove link</a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card">
+        <p class="font-semibold">No parent or guardian yet.</p>
+        {% if perms.parents.add_childguardian %}
+          <a class="btn-primary mt-3" href="{% url 'children:add_guardian' child.pk %}">Add a parent or guardian</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="card mt-3" aria-labelledby="attendance-heading">
+    <h2 id="attendance-heading" class="text-lg font-semibold">Sabbath attendance</h2>
+    {% if present_count or absent_count %}
+      <dl class="mt-3 grid grid-cols-2 gap-2 text-center">
+        <div class="rounded-xl bg-present-soft py-3">
+          <dt class="text-sm text-present">Present</dt>
+          <dd class="text-2xl font-semibold text-present">{{ present_count }}</dd>
+        </div>
+        <div class="rounded-xl bg-absent-soft py-3">
+          <dt class="text-sm text-absent">Absent</dt>
+          <dd class="text-2xl font-semibold text-absent">{{ absent_count }}</dd>
+        </div>
+      </dl>
+      <p class="mt-3 font-semibold">
+        {% if absence_weeks %}
+          Current streak: {{ absence_weeks }} consecutive absence{{ absence_weeks|pluralize }}
+        {% else %}
+          Current streak: no consecutive absences
+        {% endif %}
+      </p>
+      <h3 class="mt-4 text-sm font-bold uppercase tracking-wide text-muted">Recent Sabbaths</h3>
+      <ul class="mt-2 divide-y divide-line">
+        {% for record in recent_attendance %}
+          <li class="flex items-center justify-between py-2">
+            <span>{{ record.date|date:"j M Y" }}</span>
+            <span class="font-bold {% if record.status == 'PRESENT' %}text-present{% else %}text-absent{% endif %}">{{ record.get_status_display }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-2 text-muted">No Sabbath attendance has been recorded for this child yet.</p>
+    {% endif %}
+  </section>
+
+  {% if child.notes %}
+    <section class="card mt-3">
+      <h2 class="text-lg font-semibold">Notes</h2>
+      <p class="mt-2 whitespace-pre-wrap">{{ child.notes }}</p>
+    </section>
+  {% endif %}
+
+  {% if perms.children.change_child %}
+    <a class="btn-primary mt-4" href="{% url 'children:edit' child.pk %}">Edit child</a>
+  {% endif %}
+{% endblock %}

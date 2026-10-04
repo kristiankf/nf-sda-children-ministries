@@ -1,0 +1,23 @@
+<nav
+  class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]"
+  aria-label="Primary"
+>
+  <div class="mx-auto flex max-w-3xl">
+    <a class="nav-link" href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == "dashboard" %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="text-xl">⌂</span>
+      Home
+    </a>
+    <a class="nav-link" href="{% url 'children:list' %}" {% if request.resolver_match.namespace == "children" %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="text-xl">☺</span>
+      Children
+    </a>
+    <a class="nav-link" href="{% url 'attendance:roll' %}" {% if request.resolver_match.namespace == "attendance" %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="text-xl">✓</span>
+      Attendance
+    </a>
+    <a class="nav-link" href="{% url 'more' %}" {% if request.resolver_match.url_name == "more" or request.resolver_match.url_name == "reports" or request.resolver_match.namespace == "classes" or request.resolver_match.namespace == "parents" or "sabbath_class" in request.resolver_match.url_name or "youth_group" in request.resolver_match.url_name %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="text-xl">☰</span>
+      More
+    </a>
+  </div>
+</nav>

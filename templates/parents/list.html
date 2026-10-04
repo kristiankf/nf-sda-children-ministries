@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Parents and guardians{% endblock %}
+{% block content %}
+  <div class="mb-3 flex items-center justify-between gap-3">
+    <h1 class="text-2xl font-semibold">Parents and guardians</h1>
+    {% if can_manage_records %}
+      <a class="btn-secondary" href="{% url 'parents:create' %}">+ Add</a>
+    {% endif %}
+  </div>
+  <form method="get" action="{% url 'parents:list' %}"
+        hx-get="{% url 'parents:list' %}"
+        hx-target="#parent-results"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        hx-trigger="submit, keyup changed delay:300ms from:input">
+    <label class="field-label" for="parent-q">Search</label>
+    <input class="field-input" id="parent-q" type="search" name="q" value="{{ request.GET.q }}" placeholder="Name or phone">
+  </form>
+  {% include "parents/partials/results.html" %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+  <a class="btn-quiet" href="{% url 'more' %}">More</a>
+  <div class="mt-2 flex items-end justify-between gap-3">
+    <h1 class="text-2xl font-semibold">{{ title }}</h1>
+    {% if can_change %}
+      <a class="btn-primary w-auto px-4" href="{% url create_url %}">Add</a>
+    {% endif %}
+  </div>
+  <p class="mt-1 text-sm text-muted">A child's group follows the birthday. Changing an age band moves every child whose age now falls inside it.</p>
+  <ul class="mt-4 grid gap-2">
+    {% for group in groups %}
+      <li class="card flex items-center justify-between gap-3">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="band-dot tone-{{ group.color }}" aria-hidden="true"></span>
+          <div class="min-w-0">
+            <p class="font-semibold">{{ group.name }}</p>
+            <p class="text-sm text-muted">{{ group.age_label }}</p>
+          </div>
+        </div>
+        {% if can_change %}
+          <div class="flex shrink-0 gap-2">
+            <a class="btn-secondary w-auto px-3" href="{% url edit_url group.slug %}">Edit</a>
+            <a class="btn-quiet" href="{% url remove_url group.slug %}">Remove</a>
+          </div>
+        {% endif %}
+      </li>
+    {% empty %}
+      <li class="card text-muted">None yet.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

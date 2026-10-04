@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Reports</h1>
+  <nav class="mt-4 grid gap-2">
+    <a class="card font-semibold" href="{% url 'report_children' %}">Children</a>
+    <a class="card font-semibold" href="{% url 'report_attendance' %}">Sabbath attendance</a>
+    <a class="card font-semibold" href="{% url 'report_birthdays' %}">Birthdays</a>
+  </nav>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Remove {{ group.name }}{% endblock %}
+{% block content %}
+  <a class="btn-quiet" href="{% url list_url %}">{{ title }}</a>
+  <h1 class="mt-2 text-2xl font-semibold">Remove {{ group.name }}?</h1>
+  <p class="mt-3">Children whose birthday places them in {{ group.age_label }} will no longer have this {{ singular }} until another band covers those ages.</p>
+  <form class="mt-4" method="post">
+    {% csrf_token %}
+    <button class="btn-primary" type="submit">Remove {{ group.name }}</button>
+  </form>
+{% endblock %}

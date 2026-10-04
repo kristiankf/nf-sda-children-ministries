@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Graduate {{ child.short_name }}{% endblock %}
+{% block content %}
+  <div class="card">
+    <h1 class="text-2xl font-semibold">Graduate {{ child.short_name }}?</h1>
+    <p class="mt-2">{{ child.short_name }} will leave Children's Ministries and be marked inactive.</p>
+    <p class="mt-2 text-sm text-muted">Sabbath attendance already recorded stays in the records.</p>
+    <form class="mt-4 grid gap-2" method="post">
+      {% csrf_token %}
+      <button class="btn-primary" type="submit">Graduate</button>
+      <a class="btn-secondary" href="{{ child.get_absolute_url }}">Keep in Children's Ministries</a>
+    </form>
+  </div>
+{% endblock %}

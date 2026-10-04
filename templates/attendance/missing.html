@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Missing church{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Missing church</h1>
+  <p class="mt-1 text-sm text-muted">Consecutive Sabbaths marked absent, through {{ cutoff|date:"l, j F Y" }}. A Sabbath with no record is not counted as absent.</p>
+  {% if rows %}
+    <ul class="mt-4 space-y-2">
+      {% for row in rows %}
+        <li class="card flex items-center gap-2">
+          <a class="min-w-0 grow font-semibold" href="{% url 'children:detail' row.child_id %}">{{ row.name }}</a>
+          <span class="shrink-0 rounded-full bg-warn-soft px-3 py-1 text-sm font-bold text-warn">{{ row.weeks }} week{{ row.weeks|pluralize }}</span>
+          {% if row.parent_phone %}
+            <a class="btn-secondary w-auto shrink-0 px-3" href="tel:{{ row.parent_phone }}" aria-label="Call {{ row.parent_name }}">Call</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card mt-4">
+      <h2 class="text-xl font-semibold">No absence streaks</h2>
+      <p class="mt-2 text-muted">No active child has a current run of Sabbath absences.</p>
+    </div>
+  {% endif %}
+{% endblock %}

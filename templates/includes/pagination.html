@@ -1,0 +1,18 @@
+{% load ministry_tags %}
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="mt-4 flex items-center justify-between gap-2" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a class="btn-secondary min-w-28" href="{% query_with page=page_obj.previous_page_number %}"
+         {% if hx_target %}hx-get="{{ hx_url }}{% query_with page=page_obj.previous_page_number %}" hx-target="{{ hx_target }}" hx-swap="outerHTML" hx-push-url="true"{% endif %}>Previous</a>
+    {% else %}
+      <span class="btn-secondary min-w-28 text-muted" aria-disabled="true">Previous</span>
+    {% endif %}
+    <p class="text-center text-sm font-medium text-muted">{{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</p>
+    {% if page_obj.has_next %}
+      <a class="btn-secondary min-w-28" href="{% query_with page=page_obj.next_page_number %}"
+         {% if hx_target %}hx-get="{{ hx_url }}{% query_with page=page_obj.next_page_number %}" hx-target="{{ hx_target }}" hx-swap="outerHTML" hx-push-url="true"{% endif %}>Next</a>
+    {% else %}
+      <span class="btn-secondary min-w-28 text-muted" aria-disabled="true">Next</span>
+    {% endif %}
+  </nav>
+{% endif %}

@@ -1,0 +1,39 @@
+# Production environment: the same two containers, without the source mount.
+# Start with: docker compose -f compose.prod.yaml up -d --build
+services:
+  db:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ministry}
+      POSTGRES_USER: ${POSTGRES_USER:-ministry}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: production
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      COLLECT_STATIC: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  media:

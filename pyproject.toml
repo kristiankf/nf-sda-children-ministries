@@ -1,0 +1,31 @@
+[project]
+name = "new-fadama-childrens-ministries"
+version = "0.1.0"
+description = "Children's Ministries records for New Fadama Seventh-day Adventist Church."
+requires-python = ">=3.14"
+dependencies = [
+    "Django==6.1.1",
+    "psycopg[binary]==3.3.6",
+    "Pillow==12.3.0",
+    "gunicorn==26.2.0",
+    "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff==0.16.10",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["apps", "config"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Attendance history{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Attendance history</h1>
+  <p class="mt-1 text-sm text-muted">Saturdays are Sabbath attendance. Other dates are kept separately.</p>
+  {% if page_obj.object_list %}
+    <ul class="mt-4 space-y-2">
+      {% for row in page_obj.object_list %}
+        <li>
+          <a class="card block" href="{% url 'attendance:roll' %}?date={{ row.date|date:'Y-m-d' }}">
+            <p class="font-semibold">{{ row.date|date:"j M Y" }}</p>
+            <p class="text-sm text-muted">{% if row.is_sabbath %}Sabbath{% else %}Other date{% endif %}</p>
+            <p class="mt-1">{{ row.present }} present · {{ row.absent }} absent</p>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% include "includes/pagination.html" %}
+  {% else %}
+    <div class="card mt-4">
+      <h2 class="text-xl font-semibold">No attendance yet</h2>
+      <p class="mt-2 text-muted">Take Sabbath attendance and it will show up here.</p>
+      <a class="btn-primary mt-4" href="{% url 'attendance:roll' %}">Take attendance</a>
+    </div>
+  {% endif %}
+{% endblock %}

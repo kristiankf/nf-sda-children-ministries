@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}More{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">More</h1>
+  <nav class="mt-4 grid gap-2" aria-label="More">
+    <a class="card font-semibold" href="{% url 'parents:list' %}">Parents and guardians</a>
+    <a class="card font-semibold" href="{% url 'classes:list' %}">Classes</a>
+    {% if perms.children.change_agegroup %}
+      <a class="card font-semibold" href="{% url 'sabbath_classes' %}">Sabbath classes</a>
+      <a class="card font-semibold" href="{% url 'youth_groups' %}">Youth groups</a>
+    {% endif %}
+    <a class="card font-semibold" href="{% url 'report_birthdays' %}">Birthdays</a>
+    <a class="card font-semibold" href="{% url 'reports' %}">Reports</a>
+    <a class="card font-semibold" href="{% url 'attendance:history' %}">Sabbath attendance history</a>
+    <a class="card font-semibold" href="{% url 'attendance:missing' %}">Missing church</a>
+    <a class="card font-semibold" href="{% url 'password_change' %}">Change password</a>
+    {% if user.is_staff %}
+      <a class="card font-semibold" href="{% url 'admin:index' %}">Admin</a>
+    {% endif %}
+  </nav>
+  <form class="mt-4" method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button class="btn-secondary w-full" type="submit">Sign out</button>
+  </form>
+{% endblock %}

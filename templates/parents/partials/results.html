@@ -1,0 +1,31 @@
+{% load ministry_tags %}
+<div id="parent-results" class="mt-4">
+  {% if parents %}
+    <ul class="space-y-2">
+      {% for parent in parents %}
+        <li>
+          <a class="card block" href="{{ parent.get_absolute_url }}">
+            <p class="text-lg font-semibold">{{ parent.full_name }}</p>
+            <p class="text-sm">{{ parent.phone_primary|phone }}</p>
+            <p class="mt-1 text-sm text-muted">
+              {% for link in parent.child_links.all %}
+                {{ link.child.short_name }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+                No children linked yet
+              {% endfor %}
+            </p>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% include "includes/pagination.html" with hx_target="#parent-results" hx_url=request.path %}
+  {% else %}
+    <div class="card">
+      <h2 class="text-xl font-semibold">No parents or guardians yet</h2>
+      <p class="mt-2 text-muted">Add a parent, or link one while you are on a child's profile.</p>
+      {% if can_manage_records %}
+        <a class="btn-primary mt-4" href="{% url 'parents:create' %}">+ Add parent or guardian</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>

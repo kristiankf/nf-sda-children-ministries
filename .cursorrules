@@ -1,0 +1,14 @@
+# New Fadama SDA Children's Ministries
+
+Django monolith for New Fadama Seventh-day Adventist Church Children's Ministries. It records children, guardians, classes, and Sabbath attendance. A child's school is a text field. Classes are a fixed ladder from Pre-school through SHS 3.
+
+- Templates and HTMX only. No React, Vue, or a separate frontend app.
+- PostgreSQL only. No Redis, Celery, Kafka, or Elasticsearch.
+- Docker Compose is the development and deployment environment: one Django container and one PostgreSQL container. Do not add Nginx or other services unless a requirement explicitly asks for them.
+- WhiteNoise serves static files from the Django container.
+- Time zone is Africa/Accra. Sabbath is Saturday. Attendance statuses are PRESENT and ABSENT only.
+- An unrecorded Sabbath is not an absence.
+- Age is calculated from date of birth and is never stored.
+- Do not cascade-delete attendance. Deactivate children instead.
+- Permissions are Django groups: ADMIN, COORDINATOR, TEACHER. Enforce them on the server.
+- Keep documentation in docs/ aligned with the code.

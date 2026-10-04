@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Remove link{% endblock %}
+{% block content %}
+  <div class="card">
+    <h1 class="text-2xl font-semibold">Remove this link?</h1>
+    <p class="mt-2">{{ link.parent.full_name }} will no longer be listed as {{ link.get_relationship_display|lower }} of {{ child.short_name }}.</p>
+    <p class="mt-2 text-sm text-muted">The parent record stays, and other children linked to them are not changed.</p>
+    <form class="mt-4 grid gap-2" method="post">
+      {% csrf_token %}
+      <button class="btn-primary" type="submit">Remove link</button>
+      <a class="btn-secondary" href="{{ child.get_absolute_url }}">Keep link</a>
+    </form>
+  </div>
+{% endblock %}

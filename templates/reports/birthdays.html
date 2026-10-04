@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Birthdays{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Birthdays</h1>
+  <form class="mt-3" method="get">
+    <label class="field-label" for="scope">Show</label>
+    <select class="field-input" id="scope" name="scope" onchange="this.form.requestSubmit()">
+      <option value="today" {% if scope == "today" %}selected{% endif %}>Today</option>
+      <option value="week" {% if scope == "week" %}selected{% endif %}>This week</option>
+      <option value="month" {% if scope == "month" %}selected{% endif %}>This month</option>
+      <option value="upcoming" {% if scope == "upcoming" %}selected{% endif %}>Next 60 days</option>
+    </select>
+    <noscript><button class="btn-secondary mt-3" type="submit">Update</button></noscript>
+  </form>
+  <a class="btn-quiet" href="{% url 'report_birthdays_csv' %}?scope={{ scope }}">Download CSV</a>
+  {% if rows %}
+    <ul class="mt-3 space-y-2">
+      {% for row in rows %}
+        <li>
+          <a class="card flex items-center justify-between gap-3" href="{{ row.child.get_absolute_url }}">
+            <span>
+              <span class="block font-semibold">{{ row.child.short_name }}</span>
+              <span class="text-sm text-muted">Turns {{ row.turning }}</span>
+            </span>
+            <span class="text-right text-sm font-semibold">
+              {% if row.days == 0 %}Today{% elif row.days == 1 %}Tomorrow{% elif row.days < 0 %}{{ row.date|date:"j M" }}{% else %}{{ row.date|date:"j M" }}{% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card mt-4">
+      <h2 class="text-xl font-semibold">No birthdays in this list</h2>
+      <p class="mt-2 text-muted">Try another range, or add dates of birth on the child records.</p>
+    </div>
+  {% endif %}
+{% endblock %}

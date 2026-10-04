@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ form_title }}{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">{{ form_title }}</h1>
+  <form class="mt-4" method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="mb-4" role="alert">
+        {% for error in form.non_field_errors %}<p class="text-sm font-semibold text-absent">{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    <section class="card mb-3">
+      <h2 class="mb-3 text-lg font-semibold">Name</h2>
+      {% include "includes/field.html" with field=form.first_name %}
+      {% include "includes/field.html" with field=form.last_name %}
+    </section>
+    <section class="card mb-3">
+      <h2 class="mb-3 text-lg font-semibold">Contact</h2>
+      {% include "includes/field.html" with field=form.phone_primary %}
+      {% include "includes/field.html" with field=form.phone_secondary %}
+      {% include "includes/field.html" with field=form.email %}
+      {% include "includes/field.html" with field=form.address %}
+    </section>
+    <section class="card mb-3">
+      <h2 class="mb-3 text-lg font-semibold">Other</h2>
+      {% include "includes/field.html" with field=form.occupation %}
+      {% include "includes/field.html" with field=form.notes %}
+    </section>
+    <button class="btn-primary" type="submit">{{ submit_label }}</button>
+  </form>
+{% endblock %}

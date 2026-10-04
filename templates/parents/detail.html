@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load ministry_tags %}
+{% block title %}{{ parent.full_name }}{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">{{ parent.full_name }}</h1>
+  <section class="card mt-4">
+    <h2 class="text-lg font-semibold">Contact</h2>
+    <p class="mt-2"><a href="tel:{{ parent.phone_primary }}">{{ parent.phone_primary|phone }}</a></p>
+    {% if parent.phone_secondary %}<p><a href="tel:{{ parent.phone_secondary }}">{{ parent.phone_secondary|phone }}</a></p>{% endif %}
+    {% if parent.email %}<p><a href="mailto:{{ parent.email }}">{{ parent.email }}</a></p>{% endif %}
+    {% if parent.address %}<p class="mt-2 text-sm">{{ parent.address|linebreaksbr }}</p>{% endif %}
+    {% if parent.occupation %}<p class="mt-2 text-sm text-muted">{{ parent.occupation }}</p>{% endif %}
+  </section>
+  <section class="mt-4">
+    <h2 class="mb-2 text-lg font-semibold">Children</h2>
+    {% if parent.child_links.all %}
+      <ul class="space-y-2">
+        {% for link in parent.child_links.all %}
+          <li class="card">
+            <p class="text-sm font-bold uppercase tracking-wide text-accent">{{ link.get_relationship_display }}</p>
+            <a class="text-lg font-semibold" href="{{ link.child.get_absolute_url }}">{{ link.child.full_name }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card"><p>No children are linked yet.</p></div>
+    {% endif %}
+  </section>
+  {% if parent.notes %}
+    <section class="card mt-3">
+      <h2 class="text-lg font-semibold">Notes</h2>
+      <p class="mt-2 whitespace-pre-wrap">{{ parent.notes }}</p>
+    </section>
+  {% endif %}
+  {% if perms.parents.change_parent %}
+    <a class="btn-primary mt-4" href="{% url 'parents:edit' parent.pk %}">Edit</a>
+  {% endif %}
+{% endblock %}

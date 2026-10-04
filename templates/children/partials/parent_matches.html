@@ -1,0 +1,16 @@
+{% load ministry_tags %}
+{% if search_term %}
+  {% if parent_matches %}
+    <ul class="space-y-2">
+      {% for parent in parent_matches %}
+        <li class="card py-3">
+          <p class="font-semibold">{{ parent.full_name }}</p>
+          <p class="text-sm text-muted">{{ parent.phone_primary|phone }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="mt-2 text-sm text-muted">Choose the person in the form below.</p>
+  {% else %}
+    <p class="text-sm text-muted">No one matches that search. Add them in the form at the bottom.</p>
+  {% endif %}
+{% endif %}

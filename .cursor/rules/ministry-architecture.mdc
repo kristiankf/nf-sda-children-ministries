@@ -1,0 +1,16 @@
+---
+description: Architecture and product constraints for the Children's Ministries app
+alwaysApply: true
+---
+
+# Children's Ministries architecture
+
+This app belongs to New Fadama Seventh-day Adventist Church. It records children, guardians, classes, and Sabbath attendance. A child's school is a text field on the child. Classes are a fixed ladder from Pre-school through SHS 3, and active children move up one class when the academic year ends.
+
+Keep the runtime to two Docker Compose services: `web` (Django) and `db` (PostgreSQL). Serve static files with WhiteNoise inside the Django container. Do not add Redis, Celery, Nginx, or a frontend container unless a requirement explicitly asks for that service.
+
+Use Django templates and HTMX. Do not introduce a JavaScript framework or an API for the browser.
+
+Sabbath is Saturday, in Africa/Accra. Attendance statuses are PRESENT and ABSENT. A Saturday with no attendance row is not recorded, and it does not count as absent. Calculate age from the date of birth. Deactivate children instead of deleting their attendance history.
+
+Enforce ADMIN, COORDINATOR, and TEACHER permissions on the server with Django groups.
