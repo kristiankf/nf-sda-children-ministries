@@ -16,7 +16,7 @@ RUN useradd --create-home --uid 1000 ministry
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=ministry:ministry . .
-RUN mkdir -p media staticfiles && chown -R ministry:ministry /app
+RUN mkdir -p media staticfiles && chown ministry:ministry /app media staticfiles
 USER ministry
 ENTRYPOINT ["sh", "docker/entrypoint.sh"]
 
@@ -27,5 +27,9 @@ USER ministry
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 FROM python-base AS production
+ENV DJANGO_SETTINGS_MODULE=config.settings.production \
+    WEB_CONCURRENCY=2
 COPY --from=assets --chown=ministry:ministry /app/static/css/app.css /app/static/css/app.css
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--access-logfile", "-", "--error-logfile", "-"]
+# Collect at build time. The placeholder key only satisfies the production guard.
+RUN SECRET_KEY=collectstatic-build-only python manage.py collectstatic --noinput
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-"]

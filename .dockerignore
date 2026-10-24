@@ -14,3 +14,5 @@ node_modules
 !README.md
 docs
 tests
+.github
+.env.*

@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:18.4
+        env:
+          POSTGRES_DB: ministry
+          POSTGRES_USER: ministry
+          POSTGRES_PASSWORD: ministry
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ministry -d ministry"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      SECRET_KEY: dev-only-change-me
+      DATABASE_URL: postgresql://ministry:ministry@localhost:5432/ministry
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -r requirements.txt ruff==0.16.10
+      - run: ruff check apps config
+      - run: ruff format --check apps config
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build production image
+        run: docker build --target production -t ministry-web:ci .
+      - name: Run deploy checks in the image
+        run: >-
+          docker run --rm
+          -e SECRET_KEY=ci-only-not-a-real-secret
+          -e ALLOWED_HOSTS=ci.example.org
+          -e USE_HTTPS=true
+          --entrypoint python ministry-web:ci
+          manage.py check --deploy --fail-level ERROR
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [test, build]
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Pull, rebuild and restart on the VPS
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          APP_DIR: ${{ vars.DEPLOY_PATH || '/opt/childrens-ministries' }}
+          SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$DEPLOY_USER@$HOST" \
+            "APP_DIR='$APP_DIR' SHA='$SHA' sh -s" <<'EOF'
+          set -eu
+          cd "$APP_DIR"
+          git fetch --quiet origin main
+          git checkout --quiet --force "$SHA"
+          docker compose -f compose.prod.yaml up -d --build --remove-orphans
+
+          # Wait for the web healthcheck (migrations run on start).
+          for i in $(seq 1 40); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose -f compose.prod.yaml ps -q web)")
+            [ "$status" = healthy ] && break
+            [ "$status" = unhealthy ] && break
+            sleep 5
+          done
+          echo "web is $status"
+          if [ "$status" != healthy ]; then
+            docker compose -f compose.prod.yaml logs --tail 100 web
+            exit 1
+          fi
+          docker image prune -f >/dev/null
+          EOF

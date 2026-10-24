@@ -1,5 +1,11 @@
 # Production environment: the same two containers, without the source mount.
 # Start with: docker compose -f compose.prod.yaml up -d --build
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   db:
     image: postgres:18.4
@@ -14,6 +20,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
     restart: unless-stopped
 
   web:
@@ -24,14 +33,32 @@ services:
       - .env
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.production
-      COLLECT_STATIC: "1"
     ports:
-      - "8000:8000"
+      # Loopback only. Docker bypasses UFW, so 0.0.0.0 would expose plain HTTP.
+      # Host port 8001 (8000 is taken on the VPS). The TLS proxy forwards to it.
+      - "127.0.0.1:8001:8000"
     volumes:
       - media:/app/media
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os, urllib.request as r;
+          h = os.environ["ALLOWED_HOSTS"].split(",")[0].strip().lstrip(".");
+          r.urlopen(r.Request("http://127.0.0.1:8000/accounts/login/",
+          headers={"Host": h, "X-Forwarded-Proto": "https"}), timeout=5)
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
     restart: unless-stopped
 
 volumes:
