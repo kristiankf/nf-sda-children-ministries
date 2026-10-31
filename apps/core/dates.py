@@ -49,8 +49,19 @@ def next_birthday(dob: date, today: date) -> date:
     return this_year
 
 
+def previous_birthday(dob: date, today: date) -> date:
+    this_year = observed_birthday(dob, today.year)
+    if this_year > today:
+        return observed_birthday(dob, today.year - 1)
+    return this_year
+
+
 def days_until_birthday(dob: date, today: date) -> int:
     return (next_birthday(dob, today) - today).days
+
+
+def days_since_birthday(dob: date, today: date) -> int:
+    return (today - previous_birthday(dob, today)).days
 
 
 def subtract_years(day: date, years: int) -> date:

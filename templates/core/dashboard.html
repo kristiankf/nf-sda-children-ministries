@@ -106,6 +106,28 @@
     {% endif %}
   </section>
 
+  <section class="mt-4" aria-labelledby="recent-birthday-heading">
+    <h2 id="recent-birthday-heading" class="mb-2 text-lg font-semibold">Birthdays in the past month</h2>
+    {% if recent_birthdays %}
+      <ul class="card divide-y divide-line p-0">
+        {% for row in recent_birthdays %}
+          <li>
+            <a class="flex items-center justify-between gap-3 px-4 py-3" href="{{ row.child.get_absolute_url }}">
+              <span class="font-semibold">{{ row.child.short_name }}</span>
+              <span class="text-sm font-medium text-muted">
+                {% if row.days == 1 %}Yesterday{% else %}{{ row.date|date:"j M" }}{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card">
+        <p class="font-semibold">No birthdays in the past 30 days.</p>
+      </div>
+    {% endif %}
+  </section>
+
   <section class="mt-4" aria-labelledby="visitor-follow-heading">
     <div class="mb-2 flex items-end justify-between gap-3">
       <h2 id="visitor-follow-heading" class="text-lg font-semibold">Visitors to reach out to</h2>

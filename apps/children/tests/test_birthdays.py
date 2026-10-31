@@ -2,8 +2,13 @@ from datetime import date
 
 from django.test import TestCase
 
-from apps.children.birthdays import birthdays_in_month, birthdays_today, upcoming_birthdays
-from apps.core.dates import age_in_years, next_birthday
+from apps.children.birthdays import (
+    birthdays_in_month,
+    birthdays_today,
+    recent_birthdays,
+    upcoming_birthdays,
+)
+from apps.core.dates import age_in_years, next_birthday, previous_birthday
 from apps.core.testing import make_child
 
 
@@ -34,3 +39,15 @@ class BirthdayCalculationTests(TestCase):
         month_names = [row["child"].first_name for row in birthdays_in_month(today)]
         self.assertEqual(month_names, ["Efua", "Kojo"])
         self.assertNotIn("Adwoa", month_names)
+
+    def test_recent_birthdays_cover_the_past_month(self):
+        today = date(2026, 10, 15)
+        recent = make_child(first="Ama", last="Past", date_of_birth=date(2018, 9, 20))
+        make_child(first="Kojo", last="Soon", date_of_birth=date(2019, 10, 20))
+        make_child(first="Esi", last="Older", date_of_birth=date(2017, 8, 1))
+
+        self.assertEqual(previous_birthday(date(2018, 9, 20), today), date(2026, 9, 20))
+        rows = recent_birthdays(today, within_days=30)
+        ids = [row["child"].pk for row in rows]
+        self.assertEqual(ids, [recent.pk])
+        self.assertEqual(rows[0]["days"], 25)

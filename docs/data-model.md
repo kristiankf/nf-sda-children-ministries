@@ -101,7 +101,7 @@ If the latest Sabbath has no rows at all, nobody is treated as absent for that w
 
 ## Birthdays
 
-"This week" is today through the next six days. "This month" is the calendar month, including days already passed. Upcoming lists use the observed birthday.
+"This week" is today through the next six days. "This month" is the calendar month, including days already passed. Upcoming lists use the observed birthday. The home page also lists birthdays from the past 30 days (yesterday back), separate from the upcoming 30-day list.
 
 ### Visitor and Visit
 

@@ -1,7 +1,14 @@
 from datetime import date
 
 from apps.children.models import Child
-from apps.core.dates import age_in_years, days_until_birthday, next_birthday, observed_birthday
+from apps.core.dates import (
+    age_in_years,
+    days_since_birthday,
+    days_until_birthday,
+    next_birthday,
+    observed_birthday,
+    previous_birthday,
+)
 
 
 def _active_children():
@@ -46,6 +53,39 @@ def upcoming_birthdays(
     today: date, *, within_days: int = 30, limit: int | None = None
 ) -> list[dict]:
     rows = _upcoming_rows(_active_children(), today, within_days)
+    if limit is not None:
+        return rows[:limit]
+    return rows
+
+
+def _recent_rows(children, today: date, within_days: int) -> list[dict]:
+    """Birthdays already observed, from yesterday back through `within_days` ago."""
+    rows = []
+    for child in children:
+        days = days_since_birthday(child.date_of_birth, today)
+        if days < 1 or days > within_days:
+            continue
+        birthday = previous_birthday(child.date_of_birth, today)
+        rows.append(
+            {
+                "child": child,
+                "date": birthday,
+                "days": days,
+                "turning": age_in_years(child.date_of_birth, birthday),
+            }
+        )
+    rows.sort(
+        key=lambda row: (
+            row["days"],
+            row["child"].last_name.lower(),
+            row["child"].first_name.lower(),
+        )
+    )
+    return rows
+
+
+def recent_birthdays(today: date, *, within_days: int = 30, limit: int | None = None) -> list[dict]:
+    rows = _recent_rows(_active_children(), today, within_days)
     if limit is not None:
         return rows[:limit]
     return rows
