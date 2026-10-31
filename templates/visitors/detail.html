@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ visitor.full_name }}{% endblock %}
+{% block content %}
+  <p class="text-sm text-muted"><a href="{% url 'visitors:list' %}">Visitors</a></p>
+  <h1 class="mt-1 text-3xl font-semibold tracking-tight">{{ visitor.full_name }}</h1>
+  <p class="mt-1 text-sm text-muted">
+    {{ visitor.get_gender_display }}
+    {% if visitor.age is not None %} · age {{ visitor.age }}{% elif not visitor.date_of_birth %} · birthday unknown{% endif %}
+    · {{ visitor.visit_count }} visit{{ visitor.visit_count|pluralize }}
+  </p>
+
+  {% if visitor.is_converted %}
+    <p class="mt-3 rounded-xl bg-present-soft px-4 py-3 text-sm font-semibold text-present">
+      Converted to a child record —
+      <a class="underline" href="{{ visitor.child.get_absolute_url }}">{{ visitor.child.short_name }}</a>
+    </p>
+  {% elif visitor.needs_follow_up %}
+    <p class="mt-3 rounded-xl bg-warn-soft px-4 py-3 text-sm font-semibold text-warn">
+      {{ visitor.visits_since_follow_up }} visits since last checkup — reach out.
+    </p>
+  {% endif %}
+
+  <section class="card mt-4" aria-labelledby="profile-heading">
+    <h2 id="profile-heading" class="text-lg font-semibold">Profile</h2>
+    <dl class="mt-3 grid gap-3 text-sm">
+      <div>
+        <dt class="text-muted">Date of birth</dt>
+        <dd class="font-semibold">{% if visitor.date_of_birth %}{{ visitor.date_of_birth|date:"j F Y" }}{% else %}Unknown{% endif %}</dd>
+      </div>
+      <div>
+        <dt class="text-muted">Address</dt>
+        <dd class="font-semibold">{% if visitor.address %}{{ visitor.address }}{% else %}Not recorded{% endif %}</dd>
+      </div>
+      {% if visitor.last_followed_up_at %}
+        <div>
+          <dt class="text-muted">Last checked up</dt>
+          <dd class="font-semibold">{{ visitor.last_followed_up_at|date:"j M Y" }}</dd>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+
+  <div class="mt-4 grid gap-2">
+    {% if perms.visitors.add_visit and not visitor.is_converted %}
+      <a class="btn-secondary" href="{% url 'visitors:create' %}?visitor={{ visitor.pk }}">Record another visit</a>
+    {% endif %}
+    {% if can_follow_up %}
+      <form method="post" action="{% url 'visitors:mark_follow_up' visitor.pk %}">
+        {% csrf_token %}
+        <button class="btn-primary w-full" type="submit" data-loading-label="Saving...">Mark checked up on</button>
+      </form>
+    {% endif %}
+    {% if can_convert %}
+      <a class="btn-secondary" href="{% url 'visitors:convert' visitor.pk %}">Convert to child</a>
+    {% endif %}
+  </div>
+
+  <section class="mt-4" aria-labelledby="visits-heading">
+    <h2 id="visits-heading" class="mb-2 text-lg font-semibold">Visits</h2>
+    {% if visits %}
+      <ul class="card divide-y divide-line p-0">
+        {% for visit in visits %}
+          <li class="px-4 py-3">
+            <p class="font-semibold">{{ visit.date|date:"l, j F Y" }}</p>
+            <p class="mt-1 text-sm">{{ visit.reason }}</p>
+            {% if visit.came_with_label %}
+              <p class="mt-1 text-sm text-muted">Came with {{ visit.came_with_label }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card"><p>No visits recorded yet.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

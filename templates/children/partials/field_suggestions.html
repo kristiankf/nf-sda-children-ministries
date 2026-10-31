@@ -1,0 +1,13 @@
+{% if search_term %}
+  {% if suggestions %}
+    <ul class="suggest-options" role="listbox" aria-label="Suggestions">
+      {% for value in suggestions %}
+        <li role="option">
+          <button type="button" class="suggest-option" data-suggest-value="{{ value }}">{{ value }}</button>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="suggest-empty">No saved matches. Keep typing a new value.</p>
+  {% endif %}
+{% endif %}

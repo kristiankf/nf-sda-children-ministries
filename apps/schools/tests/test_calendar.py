@@ -6,7 +6,13 @@ from django.urls import reverse
 
 from apps.core.dates import local_today
 from apps.core.testing import make_child, make_user
-from apps.schools.calendar import advance_academic_calendar, period_after, period_containing
+from apps.schools.calendar import (
+    advance_academic_calendar,
+    clear_open_year_cache,
+    ensure_academic_calendar,
+    period_after,
+    period_containing,
+)
 from apps.schools.levels import ClassLevel
 from apps.schools.models import AcademicYear, ClassPlacement
 
@@ -38,6 +44,16 @@ class ClassProgressionTests(TestCase):
         child.refresh_from_db()
         self.assertEqual(child.class_level, ClassLevel.BASIC_5)
 
+    def test_open_year_is_remembered_for_the_day(self):
+        clear_open_year_cache()
+        today = local_today()
+        ensure_academic_calendar(today)
+        with self.assertNumQueries(0):
+            ensure_academic_calendar(today)
+        year = advance_academic_calendar(today)
+        self.assertTrue(year.is_current)
+        self.assertGreaterEqual(year.end_date, today)
+
     def test_an_active_child_moves_up_when_the_year_ends(self):
         child = make_child(class_level=ClassLevel.BASIC_5)
         closed = AcademicYear.objects.get(is_current=True)
@@ -57,6 +73,17 @@ class ClassProgressionTests(TestCase):
         self.assertEqual(
             ClassPlacement.objects.get(child=child, academic_year=current).class_level,
             ClassLevel.BASIC_6,
+        )
+
+    def test_pre_school_moves_to_nursery_1(self):
+        child = make_child(class_level=ClassLevel.PRESCHOOL)
+        self._close_current_year(date(2027, 8, 31))
+        current = advance_academic_calendar(date(2027, 9, 1))
+        child.refresh_from_db()
+        self.assertEqual(child.class_level, ClassLevel.NURSERY_1)
+        self.assertEqual(
+            ClassPlacement.objects.get(child=child, academic_year=current).class_level,
+            ClassLevel.NURSERY_1,
         )
 
     def test_shs_3_stays_in_shs_3(self):
@@ -155,10 +182,11 @@ class ClassProgressionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Pre-school")
         self.assertContains(response, "Basic 1")
-        self.assertNotContains(response, "Edit dates")
+        self.assertContains(response, "Edit dates")
 
     def _close_current_year(self, end):
         year = AcademicYear.objects.get(is_current=True)
         year.end_date = end
         year.save(update_fields=["end_date", "updated_at"])
+        clear_open_year_cache()
         return year

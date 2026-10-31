@@ -4,7 +4,7 @@ Ministry data is children's names, birth dates, phones, addresses, and optional 
 
 ## Authentication and roles
 
-Every ministry page requires a signed-in user. Views that change data check Django permissions. A missing permission is a 403, not a hidden button alone. Teachers can record and correct attendance, including clearing a mark, and cannot create or edit children, parents, or the academic year. Coordinators can. Administrators have every permission.
+Every ministry page requires a signed-in user. Views that change data check Django permissions. A missing permission is a 403, not a hidden button alone. Teachers and coordinators currently share the same ministry model permissions. Past Sabbath attendance is an exception: teachers may view and download; only coordinators and admins may edit and save a past roll. Teachers may record the current Sabbath (that Saturday through the following Friday). Only administrators are staff/superuser and can open Django admin.
 
 Logout is a POST with a CSRF token. Passwords use Django's validators and the built-in password change form.
 

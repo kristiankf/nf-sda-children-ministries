@@ -5,7 +5,10 @@ from apps.core.dates import age_in_years, days_until_birthday, next_birthday, ob
 
 
 def _active_children():
-    return Child.objects.filter(status=Child.Status.ACTIVE).only(
+    return Child.objects.filter(
+        status=Child.Status.ACTIVE,
+        date_of_birth__isnull=False,
+    ).only(
         "id",
         "first_name",
         "last_name",

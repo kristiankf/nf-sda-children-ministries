@@ -12,7 +12,12 @@
     {% if parent.occupation %}<p class="mt-2 text-sm text-muted">{{ parent.occupation }}</p>{% endif %}
   </section>
   <section class="mt-4">
-    <h2 class="mb-2 text-lg font-semibold">Children</h2>
+    <div class="mb-2 flex items-end justify-between gap-3">
+      <h2 class="text-lg font-semibold">Children</h2>
+      {% if perms.parents.add_childguardian %}
+        <a class="btn-quiet" href="{% url 'parents:link_children' parent.pk %}">Link children</a>
+      {% endif %}
+    </div>
     {% if parent.child_links.all %}
       <ul class="space-y-2">
         {% for link in parent.child_links.all %}
@@ -23,7 +28,12 @@
         {% endfor %}
       </ul>
     {% else %}
-      <div class="card"><p>No children are linked yet.</p></div>
+      <div class="card">
+        <p>No children are linked yet.</p>
+        {% if perms.parents.add_childguardian %}
+          <a class="btn-primary mt-3" href="{% url 'parents:link_children' parent.pk %}">Link children</a>
+        {% endif %}
+      </div>
     {% endif %}
   </section>
   {% if parent.notes %}

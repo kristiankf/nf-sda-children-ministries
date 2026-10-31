@@ -6,6 +6,6 @@
   <p class="mt-3">Children whose birthday places them in {{ group.age_label }} will no longer have this {{ singular }} until another band covers those ages.</p>
   <form class="mt-4" method="post">
     {% csrf_token %}
-    <button class="btn-primary" type="submit">Remove {{ group.name }}</button>
+    <button class="btn-primary" type="submit" data-loading-label="Removing...">Remove {{ group.name }}</button>
   </form>
 {% endblock %}

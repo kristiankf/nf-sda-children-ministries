@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sabbath attendance{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Sabbath attendance</h1>
+  <p class="mt-1 text-lg font-medium">{{ selected|date:"l, j F Y" }}</p>
+  {% include "attendance/partials/date_nav.html" %}
+  <div class="card mt-4" role="status">
+    <p class="font-semibold text-warn">That date is not a Sabbath.</p>
+    <p class="mt-2 text-sm text-muted">
+      Attendance is only kept for Saturdays. Pick a Saturday above, or open
+      <a class="font-semibold underline" href="{% url 'attendance:roll' %}?date={{ current_sabbath|date:'Y-m-d' }}">the current Sabbath</a>
+      ({{ current_sabbath|date:"j F Y" }}).
+    </p>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/attendance-date.js' %}"></script>
+{% endblock %}

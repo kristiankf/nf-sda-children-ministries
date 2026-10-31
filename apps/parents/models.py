@@ -21,7 +21,12 @@ class Parent(AuditModel):
         ordering = ["last_name", "first_name"]
         indexes = [
             models.Index(fields=["last_name", "first_name"]),
-            models.Index(fields=["phone_primary"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phone_primary"],
+                name="parent_unique_phone_primary",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -52,6 +57,17 @@ class Parent(AuditModel):
             raise ValidationError({"last_name": "Last name is required."})
         if self.phone_primary:
             self.phone_primary = normalize_ghana_phone(self.phone_primary)
+            same_phone = Parent.objects.filter(phone_primary=self.phone_primary)
+            if self.pk:
+                same_phone = same_phone.exclude(pk=self.pk)
+            if same_phone.exists():
+                raise ValidationError(
+                    {
+                        "phone_primary": (
+                            "This phone number is already used by another parent or guardian."
+                        )
+                    }
+                )
         if self.phone_secondary:
             self.phone_secondary = normalize_ghana_phone(self.phone_secondary)
 

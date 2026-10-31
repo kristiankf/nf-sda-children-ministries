@@ -15,6 +15,7 @@ from apps.core.dates import local_today
 from apps.parents.models import ChildGuardian, Parent
 from apps.schools.levels import ClassLevel
 from apps.schools.models import AcademicYear
+from apps.visitors.models import Visit, Visitor
 
 DEV_PASSWORD = "dev-only-change-me"
 FICTIONAL = "Fictional demonstration record. Not a real child."
@@ -39,7 +40,7 @@ class Command(BaseCommand):
     def _users(self) -> None:
         specs = [
             ("admin", ROLE_ADMIN, True, True),
-            ("coordinator", ROLE_COORDINATOR, True, False),
+            ("coordinator", ROLE_COORDINATOR, False, False),
             ("teacher", ROLE_TEACHER, False, False),
         ]
         for username, role, is_staff, is_superuser in specs:
@@ -183,31 +184,54 @@ class Command(BaseCommand):
         for sabbath, status in kojo_pattern.items():
             self._mark(kojo, sabbath, status)
 
+        guest = self._visitor("Akosua", "Guest", Visitor.Gender.FEMALE, address="New Fadama")
+        for sabbath in sabbaths[-3:]:
+            self._visit(
+                guest,
+                sabbath,
+                "Visiting Ama's family",
+                brought_by_parent=jane,
+            )
+        first_timer = self._visitor("Yaw", "Visitor", Visitor.Gender.MALE)
+        self._visit(
+            first_timer,
+            current,
+            "First Sabbath with a friend",
+            brought_by_child=ama,
+        )
+
     def _parent(self, first, last, phone):
         parent, _created = Parent.objects.get_or_create(
-            first_name=first,
-            last_name=last,
             phone_primary=phone,
-            defaults={"notes": "Fictional sample parent."},
+            defaults={
+                "first_name": first,
+                "last_name": last,
+                "notes": "Fictional sample parent.",
+            },
         )
+        parent.first_name = first
+        parent.last_name = last
+        parent.save()
         return parent
 
     def _child(self, first, last, dob, gender, school_name, class_level):
-        child, _created = Child.objects.get_or_create(
-            first_name=first,
-            last_name=last,
-            date_of_birth=dob,
-            defaults={
-                "gender": gender,
-                "school_name": school_name,
-                "class_level": class_level,
-                "status": Child.Status.ACTIVE,
-                "notes": FICTIONAL,
-            },
-        )
-        child.gender = gender
-        child.school_name = school_name
-        child.class_level = class_level
+        child = Child.objects.filter(first_name__iexact=first, last_name__iexact=last).first()
+        if child is None:
+            child = Child(
+                first_name=first,
+                last_name=last,
+                date_of_birth=dob,
+                gender=gender,
+                school_name=school_name,
+                class_level=class_level,
+                status=Child.Status.ACTIVE,
+                notes=FICTIONAL,
+            )
+        else:
+            child.date_of_birth = dob
+            child.gender = gender
+            child.school_name = school_name
+            child.class_level = class_level
         child.save()
         return child
 
@@ -223,6 +247,29 @@ class Command(BaseCommand):
             child=child,
             date=sabbath,
             defaults={"status": status},
+        )
+
+    def _visitor(self, first, last, gender, *, address=""):
+        visitor = Visitor.objects.filter(first_name__iexact=first, last_name__iexact=last).first()
+        if visitor is None:
+            visitor = Visitor(first_name=first, last_name=last, gender=gender, address=address)
+        else:
+            visitor.gender = gender
+            visitor.address = address
+        visitor.save()
+        return visitor
+
+    def _visit(self, visitor, sabbath, reason, *, brought_by_parent=None, brought_by_child=None):
+        Visit.objects.update_or_create(
+            visitor=visitor,
+            date=sabbath,
+            defaults={
+                "reason": reason,
+                "brought_by_parent": brought_by_parent,
+                "brought_by_child": brought_by_child,
+                "companion_name": "",
+                "companion_phone": "",
+            },
         )
 
     def _dob(self, today, day, month):

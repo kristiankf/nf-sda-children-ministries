@@ -17,33 +17,33 @@ from apps.schools.models import AcademicYear, ClassPlacement
 _advancing = ContextVar("academic_calendar_advancing", default=False)
 MAX_CATCH_UP_YEARS = 15
 
-
-def period_containing(day: date) -> tuple[date, date, str]:
-    """The September–August year that contains `day`."""
-    start_year = day.year if (day.month, day.day) >= (9, 1) else day.year - 1
-    start = date(start_year, 9, 1)
-    end = date(start_year + 1, 8, 31)
-    return start, end, f"{start_year}/{start_year + 1}"
+# Per-process memo: Accra calendar day → open year end date.
+# Lets signed-in middleware skip Postgres while the year is still open.
+# Cleared when the year advances, dates are edited, or tests reset state.
+_open_year_memo: tuple[date, date] | None = None
 
 
-def period_after(previous_end: date) -> tuple[date, date, str]:
-    """The year that starts the day after `previous_end` and lasts one year."""
-    start = previous_end + timedelta(days=1)
-    try:
-        next_start = date(start.year + 1, start.month, start.day)
-    except ValueError:
-        next_start = date(start.year + 1, 3, 1)
-    end = next_start - timedelta(days=1)
-    return start, end, f"{start.year}/{end.year}"
+def clear_open_year_cache() -> None:
+    global _open_year_memo
+    _open_year_memo = None
+
+
+def ensure_academic_calendar(today: date | None = None) -> None:
+    """Advance classes if needed. No-op when today's open year is already known."""
+    global _open_year_memo
+    today = today or local_today()
+    memo = _open_year_memo
+    if memo is not None and memo[0] == today and memo[1] >= today:
+        return
+    year = _resolve_open_year(today)
+    _open_year_memo = (today, year.end_date)
 
 
 def advance_academic_calendar(today: date | None = None) -> AcademicYear:
     """Open the current year, and move classes forward when the open year has ended."""
     today = today or local_today()
-    current = AcademicYear.objects.filter(is_current=True).only("end_date").first()
-    if current is not None and current.end_date >= today:
-        return AcademicYear.objects.get(pk=current.pk)
-    return _advance_locked(today)
+    ensure_academic_calendar(today)
+    return AcademicYear.objects.get(is_current=True)
 
 
 def sync_current_placement(child) -> None:
@@ -62,6 +62,13 @@ def sync_current_placement(child) -> None:
         ClassPlacement.objects.filter(child_id=child.pk, academic_year=year).delete()
 
 
+def _resolve_open_year(today: date) -> AcademicYear:
+    current = AcademicYear.objects.filter(is_current=True).first()
+    if current is not None and current.end_date >= today:
+        return current
+    return _advance_locked(today)
+
+
 def _advance_locked(today: date) -> AcademicYear:
     token = _advancing.set(True)
     try:
@@ -77,6 +84,25 @@ def _advance_locked(today: date) -> AcademicYear:
             return current
     finally:
         _advancing.reset(token)
+
+
+def period_containing(day: date) -> tuple[date, date, str]:
+    """The September–August year that contains `day`."""
+    start_year = day.year if (day.month, day.day) >= (9, 1) else day.year - 1
+    start = date(start_year, 9, 1)
+    end = date(start_year + 1, 8, 31)
+    return start, end, f"{start_year}/{start_year + 1}"
+
+
+def period_after(previous_end: date) -> tuple[date, date, str]:
+    """The year that starts the day after `previous_end` and lasts one year."""
+    start = previous_end + timedelta(days=1)
+    try:
+        next_start = date(start.year + 1, start.month, start.day)
+    except ValueError:
+        next_start = date(start.year + 1, 3, 1)
+    end = next_start - timedelta(days=1)
+    return start, end, f"{start.year}/{end.year}"
 
 
 def _open_period_containing(today: date) -> AcademicYear:

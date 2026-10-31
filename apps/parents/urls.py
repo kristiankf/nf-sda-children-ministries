@@ -9,4 +9,9 @@ urlpatterns = [
     path("new/", views.ParentCreateView.as_view(), name="create"),
     path("<int:pk>/", views.ParentDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", views.ParentUpdateView.as_view(), name="edit"),
+    path(
+        "<int:pk>/children/link/",
+        views.LinkChildrenView.as_view(),
+        name="link_children",
+    ),
 ]

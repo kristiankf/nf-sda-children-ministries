@@ -1,0 +1,22 @@
+{% if search_term and visitors %}
+  <ul class="divide-y divide-line rounded-xl border border-line">
+    {% for visitor in visitors %}
+      <li>
+        <button
+          type="button"
+          class="card w-full rounded-none border-0 py-3 text-left"
+          data-visitor-id="{{ visitor.pk }}"
+          data-visitor-name="{{ visitor.full_name }}"
+        >
+          <span class="font-semibold">{{ visitor.full_name }}</span>
+          <span class="mt-0.5 block text-sm text-muted">
+            {{ visitor.total_visits }} visit{{ visitor.total_visits|pluralize }}
+            {% if visitor.date_of_birth %} · born {{ visitor.date_of_birth|date:"j M Y" }}{% endif %}
+          </span>
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif search_term %}
+  <p class="text-sm text-muted">No matching visitors. Fill in the details below for a new visitor.</p>
+{% endif %}

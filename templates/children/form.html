@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ form_title }}{% endblock %}
 {% block content %}
   <h1 class="text-2xl font-semibold">{{ form_title }}</h1>
-  <p class="mt-1 text-sm text-muted">Use Inactive or Transferred instead of deleting a child, so Sabbath attendance stays in the records.</p>
+  <p class="mt-1 text-sm text-muted">Required fields are marked with *. Use Inactive or Transferred instead of deleting a child, so Sabbath attendance stays in the records.</p>
   <form class="mt-4" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -21,7 +22,23 @@
     </section>
     <section class="card mb-3" aria-labelledby="about-heading">
       <h2 id="about-heading" class="mb-3 text-lg font-semibold">About</h2>
-      {% include "includes/field.html" with field=form.date_of_birth %}
+      <div class="mb-4">
+        <label class="field-label" for="{{ form.date_of_birth.id_for_label }}">{{ form.date_of_birth.label }}</label>
+        <div class="date-field">
+          {{ form.date_of_birth }}
+          <button
+            class="btn-quiet date-clear{% if not form.date_of_birth.value %} hidden{% endif %}"
+            type="button"
+            data-clear-date="{{ form.date_of_birth.id_for_label }}"
+          >Clear</button>
+        </div>
+        {% if form.date_of_birth.help_text %}
+          <p class="mt-1 text-sm text-muted">{{ form.date_of_birth.help_text }}</p>
+        {% endif %}
+        {% for error in form.date_of_birth.errors %}
+          <p class="mt-1 text-sm font-semibold text-absent" role="alert">{{ error }}</p>
+        {% endfor %}
+      </div>
       {% include "includes/field.html" with field=form.gender %}
       {% include "includes/field.html" with field=form.phone %}
       {% include "includes/field.html" with field=form.status %}
@@ -39,14 +56,163 @@
     <section class="card mb-3" aria-labelledby="class-heading">
       <h2 id="class-heading" class="mb-3 text-lg font-semibold">Class</h2>
       {% include "includes/field.html" with field=form.class_level %}
-      {% include "includes/field.html" with field=form.school_name %}
+      <div class="mb-4" data-field-suggest>
+        <label class="field-label" for="{{ form.school_name.id_for_label }}">{{ form.school_name.label }}</label>
+        <div class="suggest-wrap">
+          <input
+            class="field-input"
+            type="text"
+            name="{{ form.school_name.html_name }}"
+            id="{{ form.school_name.id_for_label }}"
+            value="{{ form.school_name.value|default_if_none:'' }}"
+            maxlength="{{ form.school_name.field.max_length }}"
+            autocomplete="off"
+            data-suggest-input
+            hx-get="{% url 'children:field_suggest' %}"
+            hx-target="[data-suggest-list='school_name']"
+            hx-swap="innerHTML"
+            hx-trigger="keyup changed delay:300ms, focus"
+            hx-vals="js:{q: document.getElementById('{{ form.school_name.id_for_label }}').value, field: 'school_name'}"
+          >
+          <div class="suggest-list" data-suggest-list="school_name" hidden></div>
+        </div>
+        {% if form.school_name.help_text %}
+          <p class="mt-1 text-sm text-muted">{{ form.school_name.help_text }}</p>
+        {% endif %}
+        {% for error in form.school_name.errors %}
+          <p class="mt-1 text-sm font-semibold text-absent" role="alert">{{ error }}</p>
+        {% endfor %}
+      </div>
     </section>
+    {% if show_parent_picker and parent_form %}
+      <section
+        class="card mb-3"
+        aria-labelledby="parent-heading"
+        data-parent-picker
+        {% if parent_form.errors %}data-parent-open-on-load="1"{% endif %}
+      >
+        <h2 id="parent-heading" class="text-lg font-semibold">Parent or guardian</h2>
+        <p class="mt-1 text-sm text-muted">Optional. You can skip this and add them later from the child's page.</p>
+        {% if parent_form.non_field_errors %}
+          <div class="mt-3" role="alert">
+            {% for error in parent_form.non_field_errors %}
+              <p class="text-sm font-semibold text-absent">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {{ parent_form.linked_parent }}
+        <div
+          class="mt-3 {% if not parent_form.linked_parent.value and not parent_form.first_name.value and not parent_form.last_name.value and not parent_form.phone.value %}hidden{% endif %}"
+          data-parent-summary
+          {% if parent_form.linked_parent.value %}
+            data-linked-name="{{ parent_form.linked_parent.value }}"
+            data-linked-phone="{{ parent_form.linked_parent.value.phone_display }}"
+          {% endif %}
+        >
+          <p class="font-semibold" data-parent-summary-text>
+            {% if parent_form.linked_parent.value %}
+              Linking {{ parent_form.linked_parent.value }} · {{ parent_form.linked_parent.value.phone_display }}
+            {% elif parent_form.first_name.value or parent_form.last_name.value %}
+              Adding {{ parent_form.first_name.value }} {{ parent_form.last_name.value }}{% if parent_form.phone.value %} · {{ parent_form.phone.value }}{% endif %}
+            {% endif %}
+          </p>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <button class="btn-secondary" type="button" data-parent-open>Change</button>
+            <button class="btn-quiet" type="button" data-parent-clear>Remove</button>
+          </div>
+        </div>
+        <div class="mt-3 {% if parent_form.linked_parent.value or parent_form.first_name.value or parent_form.last_name.value or parent_form.phone.value %}hidden{% endif %}" data-parent-empty>
+          <button class="btn-secondary" type="button" data-parent-open>Add a parent or guardian</button>
+        </div>
+
+        <dialog class="parent-dialog" data-parent-dialog aria-labelledby="parent-dialog-title">
+          <div class="parent-dialog-panel">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 id="parent-dialog-title" class="text-xl font-semibold">Add a parent or guardian</h3>
+                <p class="mt-1 text-sm text-muted">Link someone already saved, or enter a new person. Only one of those.</p>
+              </div>
+              <button class="btn-quiet shrink-0" type="button" data-parent-close aria-label="Close">Close</button>
+            </div>
+
+            <div class="mt-4">
+              <label class="field-label" for="parent-search">Find an existing person</label>
+              <input
+                class="field-input"
+                id="parent-search"
+                type="search"
+                placeholder="Name or phone"
+                data-parent-search
+                hx-get="{% url 'children:parent_search' %}"
+                hx-target="[data-parent-matches]"
+                hx-swap="innerHTML"
+                hx-trigger="keyup changed delay:300ms"
+                hx-include="[data-parent-linked]"
+                hx-vals="js:{q: document.getElementById('parent-search').value}"
+                autocomplete="off"
+              >
+              <div class="mt-3" data-parent-matches>
+                {% include "children/partials/parent_picker_matches.html" with parent_matches=None search_term="" selected_parent_id="" %}
+              </div>
+            </div>
+
+            <div class="parent-dialog-divider" role="presentation">
+              <span>Or add someone new</span>
+            </div>
+
+            <div data-parent-new-fields>
+              {% include "includes/field.html" with field=parent_form.first_name %}
+              {% include "includes/field.html" with field=parent_form.last_name %}
+              {% include "includes/field.html" with field=parent_form.phone %}
+            </div>
+
+            {% include "includes/field.html" with field=parent_form.relationship %}
+
+            <div class="mt-4 flex flex-wrap gap-3">
+              <button class="btn-primary" type="button" data-parent-close>Done</button>
+              <button class="btn-quiet" type="button" data-parent-clear>Clear</button>
+            </div>
+          </div>
+        </dialog>
+      </section>
+    {% endif %}
     <section class="card mb-3" aria-labelledby="other-heading">
       <h2 id="other-heading" class="mb-3 text-lg font-semibold">Other</h2>
-      {% include "includes/field.html" with field=form.address %}
+      <div class="mb-4" data-field-suggest>
+        <label class="field-label" for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+        <div class="suggest-wrap">
+          <textarea
+            class="field-input"
+            name="{{ form.address.html_name }}"
+            id="{{ form.address.id_for_label }}"
+            rows="3"
+            autocomplete="off"
+            data-suggest-input
+            hx-get="{% url 'children:field_suggest' %}"
+            hx-target="[data-suggest-list='address']"
+            hx-swap="innerHTML"
+            hx-trigger="keyup changed delay:300ms, focus"
+            hx-vals="js:{q: document.getElementById('{{ form.address.id_for_label }}').value, field: 'address'}"
+          >{{ form.address.value|default_if_none:'' }}</textarea>
+          <div class="suggest-list" data-suggest-list="address" hidden></div>
+        </div>
+        {% if form.address.help_text %}
+          <p class="mt-1 text-sm text-muted">{{ form.address.help_text }}</p>
+        {% endif %}
+        {% for error in form.address.errors %}
+          <p class="mt-1 text-sm font-semibold text-absent" role="alert">{{ error }}</p>
+        {% endfor %}
+      </div>
       {% include "includes/field.html" with field=form.photo %}
       {% include "includes/field.html" with field=form.notes %}
     </section>
     <button class="btn-primary" type="submit">{{ submit_label }}</button>
   </form>
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/clear-date.js' %}" defer></script>
+  <script src="{% static 'js/field-suggest.js' %}" defer></script>
+  {% if show_parent_picker %}
+    <script src="{% static 'js/parent-picker.js' %}" defer></script>
+  {% endif %}
 {% endblock %}

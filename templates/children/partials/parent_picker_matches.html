@@ -1,0 +1,26 @@
+{% load ministry_tags %}
+{% if search_term %}
+  {% if parent_matches %}
+    <ul class="space-y-2" role="listbox" aria-label="Matching parents">
+      {% for parent in parent_matches %}
+        <li>
+          <button
+            type="button"
+            class="parent-pick card w-full py-3 text-left {% if selected_parent_id == parent.pk|stringformat:'s' %}is-selected{% endif %}"
+            data-parent-id="{{ parent.pk }}"
+            data-parent-name="{{ parent.full_name }}"
+            data-parent-phone="{{ parent.phone_primary|phone }}"
+          >
+            <p class="font-semibold">{{ parent.full_name }}</p>
+            <p class="text-sm text-muted">{{ parent.phone_primary|phone }}</p>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="mt-2 text-sm text-muted">Tap a name to link them. Clear the selection if you meant to add someone new.</p>
+  {% else %}
+    <p class="text-sm text-muted">No one matches that search. Add them below.</p>
+  {% endif %}
+{% else %}
+  <p class="text-sm text-muted">Type a name or phone number to search.</p>
+{% endif %}

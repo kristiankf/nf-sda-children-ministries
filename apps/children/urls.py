@@ -7,6 +7,12 @@ app_name = "children"
 urlpatterns = [
     path("", views.ChildListView.as_view(), name="list"),
     path("new/", views.ChildCreateView.as_view(), name="create"),
+    path(
+        "parents/search/",
+        guardian_views.ParentPickerSearchView.as_view(),
+        name="parent_search",
+    ),
+    path("suggest/", views.ChildFieldSuggestView.as_view(), name="field_suggest"),
     path("<int:pk>/", views.ChildDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", views.ChildUpdateView.as_view(), name="edit"),
     path("<int:pk>/graduate/", views.GraduateChildView.as_view(), name="graduate"),

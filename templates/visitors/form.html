@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ form_title }}{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">{{ form_title }}</h1>
+  <p class="mt-1 text-sm text-muted">Visitors are not on the class roll. Their visit still counts toward present for this Sabbath.</p>
+
+  <form method="post" class="mt-4" data-visitor-form>
+    {% csrf_token %}
+
+    <section class="card mb-3" aria-labelledby="match-heading" data-visitor-match>
+      <h2 id="match-heading" class="text-lg font-semibold">Returning visitor?</h2>
+      <p class="mt-1 text-sm text-muted">Search before adding someone new so visits stay on one record.</p>
+      {% if existing_visitor %}
+        {{ visit_form.existing_visitor }}
+        <p class="mt-3 font-semibold" data-visitor-selected-label>
+          Recording another visit for {{ existing_visitor.full_name }}
+        </p>
+        <button type="button" class="btn-quiet mt-2" data-visitor-clear>Use a different person</button>
+      {% else %}
+        {{ visit_form.existing_visitor }}
+        <label class="field-label mt-3" for="visitor-search">Search visitors</label>
+        <input
+          id="visitor-search"
+          class="field-input"
+          type="search"
+          name="q"
+          placeholder="Type a name"
+          autocomplete="off"
+          hx-get="{% url 'visitors:search' %}"
+          hx-trigger="input changed delay:200ms, search"
+          hx-target="#visitor-matches"
+        >
+        <div id="visitor-matches" class="mt-2" data-visitor-matches></div>
+        <p class="mt-2 text-sm text-muted" data-visitor-selected-label hidden></p>
+        <button type="button" class="btn-quiet mt-2 hidden" data-visitor-clear>Clear selection</button>
+      {% endif %}
+    </section>
+
+    <section class="card mb-3 {% if existing_visitor %}hidden{% endif %}" aria-labelledby="who-heading" data-visitor-identity>
+      <h2 id="who-heading" class="text-lg font-semibold">Who is visiting</h2>
+      {% include "includes/field.html" with field=identity_form.first_name %}
+      {% include "includes/field.html" with field=identity_form.last_name %}
+      {% include "includes/field.html" with field=identity_form.date_of_birth %}
+      {% include "includes/field.html" with field=identity_form.gender %}
+      {% include "includes/field.html" with field=identity_form.address %}
+    </section>
+
+    <section class="card mb-3" aria-labelledby="visit-heading">
+      <h2 id="visit-heading" class="text-lg font-semibold">This visit</h2>
+      {% include "includes/field.html" with field=visit_form.date %}
+      {% include "includes/field.html" with field=visit_form.reason %}
+      {% include "includes/field.html" with field=visit_form.came_with %}
+      {{ visit_form.brought_by_parent }}
+      {{ visit_form.brought_by_child }}
+
+      <div class="mt-2 hidden" data-came-with="parent">
+        <label class="field-label" for="companion-parent-search">Find parent or guardian</label>
+        <input
+          id="companion-parent-search"
+          class="field-input"
+          type="search"
+          name="q"
+          placeholder="Name or phone"
+          autocomplete="off"
+          hx-get="{% url 'visitors:parent_search' %}"
+          hx-trigger="input changed delay:200ms, search"
+          hx-target="#companion-parent-matches"
+        >
+        <div id="companion-parent-matches" class="mt-2" data-parent-matches></div>
+        <p class="mt-2 text-sm font-semibold hidden" data-parent-summary></p>
+      </div>
+
+      <div class="mt-2 hidden" data-came-with="child">
+        <label class="field-label" for="companion-child-search">Find child</label>
+        <input
+          id="companion-child-search"
+          class="field-input"
+          type="search"
+          name="q"
+          placeholder="Name"
+          autocomplete="off"
+          hx-get="{% url 'visitors:child_search' %}"
+          hx-trigger="input changed delay:200ms, search"
+          hx-target="#companion-child-matches"
+        >
+        <div id="companion-child-matches" class="mt-2" data-child-matches></div>
+        <p class="mt-2 text-sm font-semibold hidden" data-child-summary></p>
+      </div>
+
+      <div class="mt-2 hidden" data-came-with="other">
+        {% include "includes/field.html" with field=visit_form.companion_name %}
+        {% include "includes/field.html" with field=visit_form.companion_phone %}
+      </div>
+    </section>
+
+    <button class="btn-primary" type="submit" data-loading-label="Saving...">Save visit</button>
+    <a class="btn-secondary mt-2" href="{% url 'dashboard' %}">Cancel</a>
+  </form>
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/visitor-form.js' %}" defer></script>
+{% endblock %}

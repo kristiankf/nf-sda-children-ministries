@@ -29,15 +29,15 @@ Do not call the real clock for a Sabbath example. Patch `apps.core.dates.local_t
 
 | Group | Access |
 | --- | --- |
-| `TEACHER` | View children, parents, classes, and the academic year. Add, change, and delete attendance so a wrong mark can be cleared. |
-| `COORDINATOR` | Add, change, and delete ministry records. `is_staff`, so Django admin is available for the models they can manage. |
-| `ADMIN` | All permissions. The seeded admin is also a superuser. |
+| `TEACHER` | Same ministry model permissions as `COORDINATOR` for now: children, parents, guardians, attendance, age groups, visitors, and the academic year. May record the current Sabbath only; past Sabbaths are view/download. |
+| `COORDINATOR` | Same ministry permissions as `TEACHER`, plus Edit/save on past Sabbath attendance. Not staff; Django admin is not available. |
+| `ADMIN` | All permissions, including past Sabbath edit. The seeded admin is staff and a superuser, so Django admin and user accounts are available. |
 
-Coordinators edit the open academic year's dates on the Classes screen. User accounts are managed in Django admin.
+Teachers and coordinators edit the open academic year's dates on the Classes screen. User accounts are managed in Django admin by an `ADMIN` only.
 
 ## UI
 
-The layout is a single column, `max-w-3xl`, with a bottom navigation bar: Home, Children, Attendance, More. Check a phone-width window after layout changes. The attendance save bar sticks under the header so it does not cover the first child's Present and Absent choices.
+The layout is a single column, `max-w-3xl`, with a bottom navigation bar: Home, Children, Attendance, More. Check a phone-width window after layout changes. The attendance save bar sticks under the header so it does not cover the first child's Present and Absent choices. Past Sabbath summary and Edit are separate templates from the live roll.
 
 ## Seed data
 

@@ -22,8 +22,17 @@ class AuthTests(TestCase):
         response = self.client.post(reverse("logout"))
         self.assertRedirects(response, reverse("login"))
 
-    def test_teacher_cannot_edit_the_academic_year(self):
+    def test_teacher_can_edit_the_academic_year(self):
         make_user("teacher", "TEACHER")
         self.client.login(username="teacher", password="test-pass-123")
         response = self.client.get(reverse("classes:year"))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
+
+    def test_only_admin_is_staff(self):
+        teacher = make_user("teacher", "TEACHER")
+        coordinator = make_user("coordinator", "COORDINATOR")
+        admin = make_user("admin", "ADMIN")
+        self.assertFalse(teacher.is_staff)
+        self.assertFalse(coordinator.is_staff)
+        self.assertTrue(admin.is_staff)
+        self.assertTrue(admin.is_superuser)

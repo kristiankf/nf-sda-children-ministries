@@ -7,6 +7,8 @@ Django monolith for New Fadama Seventh-day Adventist Church Children's Ministrie
 - Docker Compose is the development and deployment environment: one Django container and one PostgreSQL container. Do not add Nginx or other services unless a requirement explicitly asks for them.
 - WhiteNoise serves static files from the Django container.
 - Time zone is Africa/Accra. Sabbath is Saturday. Attendance statuses are PRESENT and ABSENT only.
+- The current Sabbath is the latest Saturday on or before today and stays open through Friday. Past Sabbath edit is coordinator/admin only.
+- Visitors are separate from children; visits count toward Present totals but not the class roll.
 - An unrecorded Sabbath is not an absence.
 - Age is calculated from date of birth and is never stored.
 - Do not cascade-delete attendance. Deactivate children instead.

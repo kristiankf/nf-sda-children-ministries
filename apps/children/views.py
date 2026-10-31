@@ -2,17 +2,20 @@ import mimetypes
 
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import transaction
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from apps.children.forms import ChildForm
+from apps.children.forms import ChildForm, OptionalChildParentForm
 from apps.children.groups import attach_ministry_groups, load_bands, oldest_sabbath_band
 from apps.children.models import Child
 from apps.children.queries import filtered_children
+from apps.children.suggestions import SUGGEST_FIELDS, suggest_child_field_values
 from apps.core import dates
 from apps.core.htmx import is_htmx
+from apps.parents.models import ChildGuardian, Parent
 from apps.schools.levels import ClassLevel
 from apps.schools.models import AcademicYear
 
@@ -76,6 +79,52 @@ class ChildCreateView(AuditSaveMixin, PermissionRequiredMixin, CreateView):
     form_class = ChildForm
     template_name = "children/form.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["show_parent_picker"] = self.request.user.has_perm("parents.add_childguardian")
+        context["parent_form"] = kwargs.get("parent_form") or OptionalChildParentForm(
+            prefix="parent"
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = self.get_form()
+        parent_form = OptionalChildParentForm(request.POST, prefix="parent")
+        if form.is_valid() and parent_form.is_valid():
+            return self.forms_valid(form, parent_form)
+        return self.render_to_response(self.get_context_data(form=form, parent_form=parent_form))
+
+    @transaction.atomic
+    def forms_valid(self, form, parent_form):
+        response = super().form_valid(form)
+        if parent_form.has_parent and self.request.user.has_perm("parents.add_childguardian"):
+            self._link_optional_parent(parent_form)
+        return response
+
+    def _link_optional_parent(self, parent_form: OptionalChildParentForm) -> None:
+        linked = parent_form.cleaned_data.get("linked_parent")
+        relationship = parent_form.cleaned_data["relationship"]
+        if linked is None:
+            if not self.request.user.has_perm("parents.add_parent"):
+                return
+            linked = Parent(
+                first_name=parent_form.cleaned_data["first_name"],
+                last_name=parent_form.cleaned_data["last_name"],
+                phone_primary=parent_form.cleaned_data["phone"],
+                created_by=self.request.user,
+                updated_by=self.request.user,
+            )
+            linked.full_clean()
+            linked.save()
+        ChildGuardian.objects.create(
+            child=self.object,
+            parent=linked,
+            relationship=relationship,
+            created_by=self.request.user,
+            updated_by=self.request.user,
+        )
+
     def get_success_url(self):
         messages.success(self.request, f"{self.object.short_name} has been added.")
         return self.object.get_absolute_url()
@@ -86,6 +135,11 @@ class ChildUpdateView(AuditSaveMixin, PermissionRequiredMixin, UpdateView):
     model = Child
     form_class = ChildForm
     template_name = "children/form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["show_parent_picker"] = False
+        return context
 
     def get_success_url(self):
         messages.success(self.request, f"{self.object.short_name} has been updated.")
@@ -126,8 +180,12 @@ class ChildDetailView(PermissionRequiredMixin, DetailView):
         context.update(
             {
                 "today": today,
-                "next_birthday": next_birthday(child.date_of_birth, today),
-                "days_until_birthday": days_until_birthday(child.date_of_birth, today),
+                "next_birthday": (
+                    next_birthday(child.date_of_birth, today) if child.date_of_birth else None
+                ),
+                "days_until_birthday": (
+                    days_until_birthday(child.date_of_birth, today) if child.date_of_birth else None
+                ),
                 "present_count": counts["present"] or 0,
                 "absent_count": counts["absent"] or 0,
                 "absence_weeks": streak_for_child(child, today),
@@ -196,6 +254,32 @@ class GraduateChildView(PermissionRequiredMixin, View):
 
 def render_graduate(request, child):
     return render(request, "children/graduate.html", {"child": child})
+
+
+class ChildFieldSuggestView(PermissionRequiredMixin, View):
+    """HTMX suggestions for school and address on the child form."""
+
+    permission_required = "children.view_child"
+    template_name = "children/partials/field_suggestions.html"
+
+    def get(self, request):
+        field = (request.GET.get("field") or "").strip()
+        term = (request.GET.get("q") or "").strip()
+        if field not in SUGGEST_FIELDS:
+            return render(
+                request,
+                self.template_name,
+                {"suggestions": [], "search_term": term, "field": field},
+            )
+        return render(
+            request,
+            self.template_name,
+            {
+                "suggestions": suggest_child_field_values(field, term),
+                "search_term": term,
+                "field": field,
+            },
+        )
 
 
 ChildCreateView.extra_context = {"form_title": "Add a child", "submit_label": "Save child"}

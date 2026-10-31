@@ -19,7 +19,7 @@
         {% include "includes/field.html" %}
       {% endfor %}
       <input type="hidden" name="next" value="{{ next }}">
-      <button class="btn-primary" type="submit">Sign in</button>
+      <button class="btn-primary" type="submit" data-loading-label="Signing in...">Sign in</button>
     </form>
   </div>
 {% endblock %}

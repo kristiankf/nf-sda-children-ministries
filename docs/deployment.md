@@ -24,9 +24,9 @@ Create users with `docker compose -f compose.prod.yaml exec web python manage.py
 
 ## Static files and photos
 
-Gunicorn does not serve static files. WhiteNoise, inside the Django container, serves the files collected when the image is built. The production image rebuilds `static/css/app.css` from the Tailwind sources.
+Gunicorn does not serve static files. WhiteNoise, inside the Django container, serves the files collected when the image is built. The production image rebuilds `static/css/app.css` from the Tailwind sources. Dynamic HTML responses are gzip-compressed. Header brand images are small PNGs sized for the header; keep them that way when replacing art.
 
-Child photos are not under the public media URL. A signed-in user loads them through the child photo view.
+Child photos are not under the public media URL. A signed-in user loads them through the child photo view (`Cache-Control: private`).
 
 ## TLS
 

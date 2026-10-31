@@ -22,7 +22,7 @@
     <h2 class="mb-3 text-lg font-semibold">Link someone already saved</h2>
     {% include "includes/field.html" with field=link_form.parent %}
     {% include "includes/field.html" with field=link_form.relationship %}
-    <button class="btn-primary" type="submit" name="action" value="link">Link to {{ child.short_name }}</button>
+    <button class="btn-primary" type="submit" name="action" value="link" data-loading-label="Linking...">Link to {{ child.short_name }}</button>
   </form>
 
   <form class="card mt-3" method="post">

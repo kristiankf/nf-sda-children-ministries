@@ -142,6 +142,11 @@ def attach_ministry_groups(children, today):
     children = list(children)
     sabbath_bands, youth_bands = load_bands()
     for child in children:
+        if child.date_of_birth is None:
+            child.calculated_sabbath_class = None
+            child.sabbath_class = child.sabbath_class_override
+            child.youth_group = None
+            continue
         age = age_in_years(child.date_of_birth, today)
         calculated = match_band(age, sabbath_bands)
         child.calculated_sabbath_class = calculated

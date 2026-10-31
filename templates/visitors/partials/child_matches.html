@@ -1,0 +1,21 @@
+{% if search_term and children %}
+  <ul class="divide-y divide-line rounded-xl border border-line">
+    {% for child in children %}
+      <li>
+        <button
+          type="button"
+          class="card w-full rounded-none border-0 py-3 text-left"
+          data-child-id="{{ child.pk }}"
+          data-child-name="{{ child.short_name }}"
+        >
+          <span class="font-semibold">{{ child.short_name }}</span>
+          {% if child.age is not None %}
+            <span class="mt-0.5 block text-sm text-muted">Age {{ child.age }}</span>
+          {% endif %}
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif search_term %}
+  <p class="text-sm text-muted">No matching children.</p>
+{% endif %}

@@ -4,7 +4,7 @@
 {% block content %}
   <div class="flex items-start gap-3">
     {% if child.photo %}
-      <img class="size-16 rounded-full object-cover" src="{% url 'children:photo' child.pk %}" alt="">
+      <img class="size-16 rounded-full object-cover" src="{% url 'children:photo' child.pk %}" alt="" width="64" height="64" loading="lazy" decoding="async">
     {% else %}
       <div class="flex size-16 items-center justify-center rounded-full bg-primary text-lg font-bold text-white" aria-hidden="true">{{ child.initials }}</div>
     {% endif %}
@@ -14,26 +14,31 @@
         <p class="text-muted">Called {{ child.preferred_name }}</p>
       {% endif %}
       <p class="mt-1 text-sm font-medium">{{ child.get_status_display }} · {{ child.get_gender_display }}</p>
+      {% if child.incomplete_label %}
+        <span class="record-tag">{{ child.incomplete_label }}</span>
+      {% endif %}
     </div>
   </div>
 
   <section class="card mt-4" aria-labelledby="profile-heading">
     <h2 id="profile-heading" class="text-lg font-semibold">About</h2>
     <dl class="mt-3 space-y-2 text-sm">
-      <div class="flex justify-between gap-3"><dt class="text-muted">Age</dt><dd class="font-semibold">{{ child.age }}</dd></div>
-      <div class="flex justify-between gap-3"><dt class="text-muted">Birthday</dt><dd class="font-semibold">{{ child.date_of_birth|date:"j F" }}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Age</dt><dd class="font-semibold">{% if child.age is not None %}{{ child.age }}{% else %}Unknown{% endif %}</dd></div>
+      <div class="flex justify-between gap-3"><dt class="text-muted">Birthday</dt><dd class="font-semibold">{% if child.date_of_birth %}{{ child.date_of_birth|date:"j F" }}{% else %}Unknown{% endif %}</dd></div>
       {% if child.phone %}
         <div class="flex justify-between gap-3">
           <dt class="text-muted">Phone</dt>
           <dd class="font-semibold"><a href="tel:{{ child.phone }}">{{ child.phone|phone }}</a></dd>
         </div>
       {% endif %}
-      <div class="flex justify-between gap-3">
-        <dt class="text-muted">Next birthday</dt>
-        <dd class="text-right font-semibold">
-          {% if days_until_birthday == 0 %}Today · turns {{ child.age }}{% else %}{{ next_birthday|date:"j F" }} · {{ days_until_birthday }} day{{ days_until_birthday|pluralize }}{% endif %}
-        </dd>
-      </div>
+      {% if child.date_of_birth %}
+        <div class="flex justify-between gap-3">
+          <dt class="text-muted">Next birthday</dt>
+          <dd class="text-right font-semibold">
+            {% if days_until_birthday == 0 %}Today · turns {{ child.age }}{% else %}{{ next_birthday|date:"j F" }} · {{ days_until_birthday }} day{{ days_until_birthday|pluralize }}{% endif %}
+          </dd>
+        </div>
+      {% endif %}
     </dl>
     {% if child.address %}
       <p class="mt-3 text-sm">{{ child.address|linebreaksbr }}</p>

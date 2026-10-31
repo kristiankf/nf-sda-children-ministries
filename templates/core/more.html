@@ -10,6 +10,8 @@
       <a class="card font-semibold" href="{% url 'youth_groups' %}">Youth groups</a>
     {% endif %}
     <a class="card font-semibold" href="{% url 'report_birthdays' %}">Birthdays</a>
+    <a class="card font-semibold" href="{% url 'visitors:list' %}">Visitors</a>
+    <a class="card font-semibold" href="{% url 'visitors:follow_up' %}">Visitor follow-up</a>
     <a class="card font-semibold" href="{% url 'reports' %}">Reports</a>
     <a class="card font-semibold" href="{% url 'attendance:history' %}">Sabbath attendance history</a>
     <a class="card font-semibold" href="{% url 'attendance:missing' %}">Missing church</a>
@@ -20,6 +22,6 @@
   </nav>
   <form class="mt-4" method="post" action="{% url 'logout' %}">
     {% csrf_token %}
-    <button class="btn-secondary w-full" type="submit">Sign out</button>
+    <button class="btn-secondary w-full" type="submit" data-loading-label="Signing out...">Sign out</button>
   </form>
 {% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Visitor follow-up{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold">Visitors to reach out to</h1>
+  <p class="mt-1 text-sm text-muted">People with three or more visits since the last checkup.</p>
+  {% if visitors %}
+    <ul class="card mt-4 divide-y divide-line p-0">
+      {% for visitor in visitors %}
+        <li class="flex items-center gap-2 px-4 py-3">
+          <a class="min-w-0 grow font-semibold" href="{{ visitor.get_absolute_url }}">{{ visitor.full_name }}</a>
+          <span class="shrink-0 rounded-full bg-warn-soft px-3 py-1 text-sm font-bold text-warn">
+            {{ visitor.since }} visit{{ visitor.since|pluralize }}
+          </span>
+          {% if perms.visitors.change_visitor %}
+            <form method="post" action="{% url 'visitors:mark_follow_up' visitor.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'visitors:follow_up' %}">
+              <button class="btn-secondary w-auto shrink-0 px-3" type="submit" data-loading-label="...">Checked up</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="card mt-4">
+      <p class="font-semibold">Nobody needs follow-up right now.</p>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -11,6 +11,7 @@ from apps.children.forms import ChildForm
 from apps.children.models import Child
 from apps.children.queries import filtered_children
 from apps.core.testing import link_guardian, make_child, make_parent, make_user
+from apps.parents.models import ChildGuardian, Parent
 from apps.schools.levels import ClassLevel
 from apps.schools.models import ClassPlacement
 
@@ -65,6 +66,139 @@ class ChildTests(TestCase):
         child.refresh_from_db()
         self.assertEqual(child.preferred_name, "Amy")
         self.assertEqual(child.class_level, ClassLevel.BASIC_5)
+
+    def test_create_child_can_add_a_new_parent_in_the_same_form(self):
+        self.client.force_login(self.coordinator)
+        response = self.client.post(
+            reverse("children:create"),
+            {
+                "first_name": "Ama",
+                "last_name": "Mensah",
+                "date_of_birth": "2016-10-14",
+                "gender": "FEMALE",
+                "status": "ACTIVE",
+                "parent-first_name": "Jane",
+                "parent-last_name": "Mensah",
+                "parent-phone": "024 411 1222",
+                "parent-relationship": "MOTHER",
+            },
+        )
+        child = Child.objects.get(first_name="Ama", last_name="Mensah")
+        self.assertRedirects(response, child.get_absolute_url())
+        parent = Parent.objects.get(first_name="Jane", last_name="Mensah")
+        self.assertEqual(parent.phone_primary, "+233244111222")
+        link = ChildGuardian.objects.get(child=child, parent=parent)
+        self.assertEqual(link.relationship, ChildGuardian.Relationship.MOTHER)
+        self.assertFalse(child.is_incomplete)
+
+    def test_create_child_can_link_an_existing_parent(self):
+        parent = make_parent(first="Kojo", last="Asare", phone="+233244555666")
+        self.client.force_login(self.coordinator)
+        response = self.client.post(
+            reverse("children:create"),
+            {
+                "first_name": "Esi",
+                "last_name": "Asare",
+                "gender": "FEMALE",
+                "status": "ACTIVE",
+                "parent-linked_parent": str(parent.pk),
+                "parent-relationship": "FATHER",
+            },
+        )
+        child = Child.objects.get(first_name="Esi", last_name="Asare")
+        self.assertRedirects(response, child.get_absolute_url())
+        self.assertTrue(
+            ChildGuardian.objects.filter(
+                child=child, parent=parent, relationship=ChildGuardian.Relationship.FATHER
+            ).exists()
+        )
+
+    def test_create_child_rejects_both_linked_and_new_parent(self):
+        parent = make_parent()
+        self.client.force_login(self.coordinator)
+        response = self.client.post(
+            reverse("children:create"),
+            {
+                "first_name": "Ama",
+                "last_name": "Mensah",
+                "gender": "FEMALE",
+                "status": "ACTIVE",
+                "parent-linked_parent": str(parent.pk),
+                "parent-first_name": "Jane",
+                "parent-last_name": "Mensah",
+                "parent-phone": "024 411 1222",
+                "parent-relationship": "MOTHER",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Child.objects.filter(first_name="Ama", last_name="Mensah").exists())
+        self.assertContains(response, "either an existing parent or add someone new")
+
+    def test_child_name_and_birthday_must_be_unique(self):
+        make_child(first="Ama", last="Mensah", date_of_birth=date(2016, 10, 14))
+        duplicate = ChildForm(
+            data={
+                "first_name": "ama",
+                "last_name": "mensah",
+                "date_of_birth": "2016-10-14",
+                "gender": "FEMALE",
+                "status": "ACTIVE",
+            }
+        )
+        self.assertFalse(duplicate.is_valid())
+        self.assertIn("first_name", duplicate.errors)
+
+        different_birthday = ChildForm(
+            data={
+                "first_name": "Ama",
+                "last_name": "Mensah",
+                "date_of_birth": "2017-01-01",
+                "gender": "FEMALE",
+                "status": "ACTIVE",
+            }
+        )
+        self.assertTrue(different_birthday.is_valid(), different_birthday.errors)
+
+    def test_date_of_birth_can_be_left_blank(self):
+        form = ChildForm(
+            data={
+                "first_name": "Ama",
+                "last_name": "Mensah",
+                "date_of_birth": "",
+                "gender": "FEMALE",
+                "status": "ACTIVE",
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        child = form.save()
+        self.assertIsNone(child.date_of_birth)
+        self.assertIsNone(child.age)
+        self.assertTrue(child.is_incomplete)
+
+    def test_incomplete_when_birthday_or_guardian_is_missing(self):
+        missing_both = make_child(first="Kojo", last="Asare", date_of_birth=None)
+        self.assertTrue(missing_both.is_incomplete)
+        self.assertEqual(
+            missing_both.incomplete_label,
+            "Incomplete - missing birthday and parent",
+        )
+
+        missing_parent = make_child(first="Ama", last="Mensah")
+        self.assertTrue(missing_parent.is_incomplete)
+        self.assertEqual(missing_parent.incomplete_label, "Incomplete - missing parent")
+
+        missing_birthday = make_child(first="Yaw", last="Boateng", date_of_birth=None)
+        link_guardian(missing_birthday, make_parent())
+        self.assertTrue(missing_birthday.is_incomplete)
+        self.assertEqual(
+            missing_birthday.incomplete_label,
+            "Incomplete - missing birthday",
+        )
+
+        complete = make_child(first="Esi", last="Owusu")
+        link_guardian(complete, make_parent(phone="+233244000099"))
+        self.assertFalse(complete.is_incomplete)
+        self.assertEqual(complete.incomplete_label, "")
 
     def test_future_date_of_birth_is_rejected(self):
         form = ChildForm(
@@ -129,10 +263,10 @@ class ChildTests(TestCase):
         self.assertEqual(list(filtered_children({"q": "Harbour"}, today)), [child])
         self.assertEqual(filtered_children({"q": "Nobody"}, today).count(), 0)
 
-    def test_teacher_cannot_create_a_child(self):
+    def test_teacher_can_create_a_child(self):
         self.client.force_login(self.teacher)
         response = self.client.get(reverse("children:create"))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
     def test_anonymous_user_cannot_view_a_child(self):
         child = make_child()
@@ -147,6 +281,46 @@ class ChildTests(TestCase):
         self.assertEqual(
             self.client.get(reverse("children:photo", args=[child.pk])).status_code, 404
         )
+
+    def test_school_and_address_suggestions_match_existing_values(self):
+        make_child(first="Kojo", last="Asare", school_name="Sample Harbour School")
+        make_child(
+            first="Ama",
+            last="Boateng",
+            school_name="Ridge International",
+            address="House 12, New Fadama",
+        )
+        make_child(first="Esi", last="Mensah", school_name="Sample Harbour School")
+
+        self.client.force_login(self.coordinator)
+        school = self.client.get(
+            reverse("children:field_suggest"),
+            {"field": "school_name", "q": "sam"},
+        )
+        self.assertEqual(school.status_code, 200)
+        self.assertContains(school, "Sample Harbour School")
+        self.assertNotContains(school, "Ridge International")
+
+        address = self.client.get(
+            reverse("children:field_suggest"),
+            {"field": "address", "q": "Fadama"},
+        )
+        self.assertEqual(address.status_code, 200)
+        self.assertContains(address, "House 12, New Fadama")
+
+        empty = self.client.get(
+            reverse("children:field_suggest"),
+            {"field": "school_name", "q": ""},
+        )
+        self.assertEqual(empty.status_code, 200)
+        self.assertNotContains(empty, "Sample Harbour School")
+
+        bad_field = self.client.get(
+            reverse("children:field_suggest"),
+            {"field": "notes", "q": "secret"},
+        )
+        self.assertEqual(bad_field.status_code, 200)
+        self.assertNotContains(bad_field, "suggest-option")
 
     def test_photo_requires_a_real_image_and_login(self):
         self.client.force_login(self.coordinator)

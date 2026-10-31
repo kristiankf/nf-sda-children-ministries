@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Visitors{% endblock %}
+{% block content %}
+  <div class="flex items-end justify-between gap-3">
+    <h1 class="text-2xl font-semibold">Visitors</h1>
+    {% if perms.visitors.add_visit %}
+      <a class="btn-secondary w-auto shrink-0" href="{% url 'visitors:create' %}">Add visitor</a>
+    {% endif %}
+  </div>
+  <form
+    class="mt-4"
+    method="get"
+    hx-get="{% url 'visitors:list' %}"
+    hx-trigger="input changed delay:200ms, search, submit"
+    hx-target="#visitor-results"
+    hx-push-url="true"
+  >
+    <label class="field-label" for="visitor-q">Search</label>
+    <input id="visitor-q" class="field-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Name" autocomplete="off">
+  </form>
+  <div id="visitor-results" class="mt-4">
+    {% include "visitors/partials/results.html" %}
+  </div>
+{% endblock %}

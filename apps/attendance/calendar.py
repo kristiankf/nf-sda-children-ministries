@@ -24,3 +24,12 @@ def latest_sabbath_on_or_before(day: date) -> date:
     """Return the Saturday on or before `day`."""
     days_back = (day.weekday() - SATURDAY) % 7
     return day - timedelta(days=days_back)
+
+
+def current_sabbath(day: date) -> date:
+    """The open Sabbath for recording.
+
+    Saturday itself, or the previous Saturday through Friday. The next Saturday
+    becomes current only when that day arrives.
+    """
+    return latest_sabbath_on_or_before(day)

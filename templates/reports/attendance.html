@@ -24,7 +24,7 @@
         <option value="none" {% if request.GET.class_level == "none" %}selected{% endif %}>No class yet</option>
       </select>
     </div>
-    <button class="btn-primary" type="submit">Update report</button>
+    <button class="btn-primary" type="submit" data-loading-label="Updating...">Update report</button>
   </form>
   <dl class="mt-4 grid grid-cols-3 gap-2 text-center">
     <div class="rounded-xl bg-present-soft py-3"><dt class="text-sm text-present">Present</dt><dd class="text-2xl font-semibold text-present">{{ present }}</dd></div>

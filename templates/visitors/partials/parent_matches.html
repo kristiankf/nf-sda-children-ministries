@@ -1,0 +1,19 @@
+{% if search_term and parents %}
+  <ul class="divide-y divide-line rounded-xl border border-line">
+    {% for parent in parents %}
+      <li>
+        <button
+          type="button"
+          class="card w-full rounded-none border-0 py-3 text-left"
+          data-parent-id="{{ parent.pk }}"
+          data-parent-name="{{ parent.full_name }}"
+        >
+          <span class="font-semibold">{{ parent.full_name }}</span>
+          <span class="mt-0.5 block text-sm text-muted">{{ parent.phone_display }}</span>
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif search_term %}
+  <p class="text-sm text-muted">No matching parents.</p>
+{% endif %}

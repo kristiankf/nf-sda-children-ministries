@@ -36,7 +36,8 @@ The image has three stages:
 | `apps.children` | Child records, search, guardians, photos, birthday report, children totals |
 | `apps.parents` | Parent records |
 | `apps.schools` | Class ladder, academic year, class placements |
-| `apps.attendance` | Sabbath roll, history, streaks, attendance report |
+| `apps.attendance` | Current/past Sabbath roll, history, streaks, attendance report, Sabbath CSV |
+| `apps.visitors` | Visitor records, Sabbath visits, follow-up, convert to child |
 
 There is no custom user model. People who sign in are Django users. Children and parents are not users.
 
@@ -46,12 +47,18 @@ Pages are server-rendered. A few forms use HTMX:
 
 - Child and parent lists refetch their result markup on search.
 - Adding a guardian searches existing parents.
+- A parent detail page can link one or more children, with search that keeps current selections.
+- Adding a child can optionally open a parent modal that searches existing parents or collects first name, last name, and phone.
+- School and address on the child form suggest values already saved on other children as you type.
+- Add visitor searches returning visitors and companion parents or children.
 
-The Sabbath roll search is local JavaScript. It hides rows. The form still posts every child.
+The Sabbath roll search is local JavaScript. It hides rows. The form still posts every child. Past Sabbaths use a summary template; Edit opens the live roll for coordinators and admins.
 
 ## Static files and email
 
-Development uses Django's static finders and the console email backend. Production uses WhiteNoise's compressed manifest storage. Reminder-style information on the dashboard is a database query, not a scheduled job. Outbound email, when configured, uses Django's SMTP settings.
+Development uses Django's static finders and the console email backend. Production uses WhiteNoise's compressed manifest storage with a long browser cache. `GZipMiddleware` compresses HTML and other compressible responses (WhiteNoise already serves pre-compressed static files). Reminder-style information on the dashboard is a database query, not a scheduled job. Outbound email, when configured, uses Django's SMTP settings.
+
+The academic calendar check on signed-in requests remembers the open year in process memory for the Accra calendar day, so Postgres is not hit on every page view while that year is still open. Editing the year dates clears the memo.
 
 ## What is intentionally absent
 

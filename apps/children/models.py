@@ -4,6 +4,7 @@ from pathlib import Path
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.urls import reverse
 from PIL import Image, UnidentifiedImageError
 
@@ -120,7 +121,11 @@ class Child(AuditModel):
     middle_name = models.CharField(max_length=80, blank=True)
     last_name = models.CharField(max_length=80)
     preferred_name = models.CharField(max_length=80, blank=True)
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Leave blank if unknown.",
+    )
     gender = models.CharField(max_length=20, choices=Gender.choices)
     phone = models.CharField(
         max_length=20,
@@ -160,6 +165,12 @@ class Child(AuditModel):
         ordering = ["last_name", "first_name"]
         verbose_name_plural = "children"
         constraints = [
+            models.UniqueConstraint(
+                Lower("first_name"),
+                Lower("last_name"),
+                "date_of_birth",
+                name="child_unique_name_dob_ci",
+            ),
             models.CheckConstraint(
                 condition=Q(status__in=["ACTIVE", "INACTIVE", "TRANSFERRED"]),
                 name="child_status_valid",
@@ -202,8 +213,28 @@ class Child(AuditModel):
         return f"{(self.first_name or ' ')[:1]}{(self.last_name or ' ')[:1]}".upper()
 
     @property
-    def age(self) -> int:
+    def age(self) -> int | None:
+        if self.date_of_birth is None:
+            return None
         return age_in_years(self.date_of_birth, local_today())
+
+    @property
+    def is_incomplete(self) -> bool:
+        """True when birthday is missing or no parent/guardian is linked."""
+        return bool(self.incomplete_label)
+
+    @property
+    def incomplete_label(self) -> str:
+        """Tag text naming what is missing, or empty when the record is complete."""
+        missing_birthday = self.date_of_birth is None
+        missing_parent = not any(self.guardians.all())
+        if missing_birthday and missing_parent:
+            return "Incomplete - missing birthday and parent"
+        if missing_birthday:
+            return "Incomplete - missing birthday"
+        if missing_parent:
+            return "Incomplete - missing parent"
+        return ""
 
     def clean(self) -> None:
         super().clean()
@@ -216,6 +247,23 @@ class Child(AuditModel):
             raise ValidationError({"first_name": "First name is required."})
         if not self.last_name:
             raise ValidationError({"last_name": "Last name is required."})
+        if self.date_of_birth is not None:
+            same_child = Child.objects.filter(
+                first_name__iexact=self.first_name,
+                last_name__iexact=self.last_name,
+                date_of_birth=self.date_of_birth,
+            )
+            if self.pk:
+                same_child = same_child.exclude(pk=self.pk)
+            if same_child.exists():
+                raise ValidationError(
+                    {
+                        "first_name": (
+                            f'A child named "{self.first_name} {self.last_name}" '
+                            "with this birthday is already in the records."
+                        )
+                    }
+                )
         if self.date_of_birth and self.date_of_birth > local_today():
             raise ValidationError({"date_of_birth": "Date of birth cannot be in the future."})
         if self.phone:

@@ -1,0 +1,30 @@
+{% if child_matches %}
+  <fieldset>
+    <legend class="field-label">Children</legend>
+    <ul class="space-y-2">
+      {% for child in child_matches %}
+        <li>
+          <label class="card flex cursor-pointer items-start gap-3 py-3">
+            <input
+              class="mt-1 size-5 shrink-0 accent-primary"
+              type="checkbox"
+              name="children"
+              value="{{ child.pk }}"
+              {% if child.pk|stringformat:"s" in selected_ids %}checked{% endif %}>
+            <span class="min-w-0">
+              <span class="block font-semibold">{{ child.full_name }}</span>
+              <span class="block text-sm text-muted">
+                {% if child.class_level %}{{ child.get_class_level_display }}{% else %}No class yet{% endif %}
+                {% if child.school_name %} · {{ child.school_name }}{% endif %}
+              </span>
+            </span>
+          </label>
+        </li>
+      {% endfor %}
+    </ul>
+  </fieldset>
+{% elif search_term %}
+  <p class="text-sm text-muted">No children match that search, or they are already linked.</p>
+{% else %}
+  <p class="text-sm text-muted">Every active child is already linked, or there are no active children yet.</p>
+{% endif %}

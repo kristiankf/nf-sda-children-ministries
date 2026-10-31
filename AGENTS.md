@@ -33,16 +33,18 @@ The development container bind-mounts the project, so the built file in `static/
 ## Product rules that are easy to get wrong
 
 - Worship day is Saturday. Say Sabbath, not Sunday.
-- Attendance defaults to today on Saturday, and to the next Saturday on Sunday through Friday, using `Africa/Accra`.
+- The current Sabbath for recording is today when today is Saturday, otherwise the previous Saturday, in `Africa/Accra`. It stays current until the next Saturday arrives.
+- Teachers record the current Sabbath only. Coordinators and admins may edit past Sabbaths. Attendance dates that are not Saturdays are rejected on the roll.
 - Statuses are `PRESENT` and `ABSENT` only.
 - A Sabbath with no `Attendance` row is not recorded. It is not an absence. Streaks walk recorded Saturday rows and skip gaps.
-- Age is calculated. Never store it.
+- Visitors are not on the class roll; their visits still count toward Present totals.
+- Age is calculated. Never store it. Date of birth may be blank until known.
 - Do not delete a child to "remove" them. Set status to inactive or transferred. Attendance uses `PROTECT`.
 - Ghana phone numbers are stored as E.164 (`+233` plus 9 digits) and shown as `024 412 3456`.
 - Photos are optional and are served only to a signed-in user.
 
 ## Scope
 
-Do not build a general church management system, a person registry, or background jobs. A child's school is a name on the child. The class is one step on a fixed ladder, from Pre-school through SHS 3. `ClassPlacement` records that class for each academic year. The open year defaults to 1 September through 31 August. Coordinators can change those dates. When the end date has passed, the next signed-in request moves each active child up one class. SHS 3 stays in SHS 3. Inactive children are not moved.
+Do not build a general church management system, a person registry, or background jobs. A child's school is a name on the child. The class is one step on a fixed ladder, from Pre-school through SHS 3. `ClassPlacement` records that class for each academic year. The open year defaults to 1 September through 31 August. Teachers and coordinators can change those dates. When the end date has passed, the next signed-in request moves each active child up one class. SHS 3 stays in SHS 3. Inactive children are not moved.
 
 Seed data is fictional. Do not treat `dev-only-change-me` as a production secret.

@@ -16,13 +16,14 @@ Use explicit dates. Patch `apps.core.dates.local_today` when a view reads "today
 | Month boundary, year boundary, leap day | same |
 | Accra time zone | same |
 | Present breaks a streak; missing rows are not absences; future and non-Saturday rows are ignored | `apps/attendance/tests/test_streaks.py` |
-| Roll opens on the coming Sabbath; a future date cannot be saved; teacher can save today or a past Sabbath; duplicate child/date is rejected; anonymous users are redirected | `apps/attendance/tests/test_views.py` |
+| Roll opens on the current Sabbath; non-Saturday warning; next Sabbath not open; teacher saves current only; past summary + CSV; coordinator edits past; duplicate child/date rejected; anonymous redirected | `apps/attendance/tests/test_views.py` |
 | Dashboard names a child and the week count | same |
-| Create and update a child, class placement, future date of birth, search by name, phone, and school, teacher forbidden, photo type | `apps/children/tests/test_children.py` |
+| Create and update a child, optional parent on create (new or link), unique name plus birthday, optional date of birth, Incomplete label when birthday and/or parent is missing, school/address typeahead suggestions, class placement, future date of birth, search by name, phone, and school, photo type | `apps/children/tests/test_children.py` |
 | Age, leap-day birthday, month filter | `apps/children/tests/test_birthdays.py` |
-| Phone normalization, two children for one parent, two guardians for one child | `apps/parents/tests/test_parents.py` |
-| September–August year, automatic class move, SHS 3 stays, inactive children stay, missed years, coordinator edits dates | `apps/schools/tests/test_calendar.py` |
-| Groups, login, logout, teacher blocked from editing the academic year | `apps/accounts/tests.py` |
+| Phone normalization, unique primary phone, two children for one parent, two guardians for one child, link several children from a parent page | `apps/parents/tests/test_parents.py` |
+| September–August year, automatic class move, SHS 3 stays, inactive children stay, missed years, year date edits | `apps/schools/tests/test_calendar.py` |
+| Groups, login, logout, teacher can edit academic year, only admin is staff | `apps/accounts/tests.py` |
+| Add visitor and visit, companion parent, returning visitor, present totals include visitors, follow-up after three visits, convert to child | `apps/visitors/tests/test_visitors.py` |
 
 Factories are in `apps/core/testing.py`.
 

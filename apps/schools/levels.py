@@ -3,6 +3,10 @@ from django.db import models
 
 class ClassLevel(models.TextChoices):
     PRESCHOOL = "PRESCHOOL", "Pre-school"
+    NURSERY_1 = "NURSERY_1", "Nursery 1"
+    NURSERY_2 = "NURSERY_2", "Nursery 2"
+    KG_1 = "KG_1", "KG 1"
+    KG_2 = "KG_2", "KG 2"
     BASIC_1 = "BASIC_1", "Basic 1"
     BASIC_2 = "BASIC_2", "Basic 2"
     BASIC_3 = "BASIC_3", "Basic 3"

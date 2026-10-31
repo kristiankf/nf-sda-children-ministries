@@ -1,0 +1,28 @@
+<form class="mt-3 flex items-end gap-2" method="get" data-sabbath-date-form>
+  <div class="grow">
+    <label class="field-label" for="attendance-date">Sabbath date</label>
+    <input
+      class="field-input"
+      id="attendance-date"
+      type="date"
+      name="date"
+      value="{{ selected|date:'Y-m-d' }}"
+      data-sabbath-date
+    >
+  </div>
+  {% if selected_division %}
+    <input type="hidden" name="division" value="{{ selected_division }}">
+  {% endif %}
+  <button class="btn-secondary" type="submit">Open</button>
+</form>
+<p class="mt-1 text-sm text-muted">Choose a Saturday only.</p>
+<div class="mt-3 grid grid-cols-2 gap-2">
+  {% if previous_date %}
+    <a class="btn-secondary" href="{% url 'attendance:roll' %}?date={{ previous_date|date:'Y-m-d' }}{% if selected_division %}&division={{ selected_division }}{% endif %}">Previous Sabbath</a>
+  {% else %}
+    <span></span>
+  {% endif %}
+  {% if next_date %}
+    <a class="btn-secondary" href="{% url 'attendance:roll' %}?date={{ next_date|date:'Y-m-d' }}{% if selected_division %}&division={{ selected_division }}{% endif %}">Next Sabbath</a>
+  {% endif %}
+</div>

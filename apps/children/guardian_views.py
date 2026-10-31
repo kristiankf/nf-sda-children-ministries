@@ -9,6 +9,28 @@ from apps.children.models import Child
 from apps.core.htmx import is_htmx
 from apps.core.phones import phone_search_digits
 from apps.parents.models import ChildGuardian, Parent
+from apps.parents.views import search_parents
+
+
+class ParentPickerSearchView(PermissionRequiredMixin, View):
+    """HTMX search for the optional parent modal on Add child."""
+
+    permission_required = "parents.view_parent"
+    template_name = "children/partials/parent_picker_matches.html"
+
+    def get(self, request):
+        term = (request.GET.get("q") or "").strip()
+        parents = search_parents(term)[:12] if term else Parent.objects.none()
+        selected = request.GET.get("selected") or request.GET.get("parent-linked_parent") or ""
+        return render(
+            request,
+            self.template_name,
+            {
+                "parent_matches": parents,
+                "search_term": term,
+                "selected_parent_id": selected,
+            },
+        )
 
 
 class AddGuardianView(PermissionRequiredMixin, View):

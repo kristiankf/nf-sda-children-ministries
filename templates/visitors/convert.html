@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Convert {{ visitor.full_name }}{% endblock %}
+{% block content %}
+  <div class="card">
+    <h1 class="text-2xl font-semibold">Convert {{ visitor.full_name }} to a child?</h1>
+    <p class="mt-2">
+      This creates a child record with their name, gender{% if visitor.date_of_birth %}, birthday{% endif %}{% if visitor.address %}, and address{% endif %}.
+      Visit history stays on the visitor record. They will appear on the attendance roll as an incomplete child until guardians and other details are added.
+    </p>
+    <form class="mt-4 grid gap-2" method="post">
+      {% csrf_token %}
+      <button class="btn-primary" type="submit" data-loading-label="Converting...">Convert to child</button>
+      <a class="btn-secondary" href="{{ visitor.get_absolute_url }}">Cancel</a>
+    </form>
+  </div>
+{% endblock %}

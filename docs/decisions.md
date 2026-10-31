@@ -20,9 +20,13 @@ Compose is how the app is developed and how it is deployed. One container runs D
 
 Gunicorn does not serve static files. WhiteNoise does that inside the Django container, which keeps the production compose file to the same two services. A TLS proxy, if needed, stays on the host.
 
+## Current Sabbath vs past summary
+
+The open roll is the latest Saturday on or before today. It stays editable for teachers through Friday. Earlier Saturdays open as a summary (present children, visitors, CSV). Only coordinators and admins use Edit to change a past roll. Non-Saturdays are rejected on the attendance page.
+
 ## Sabbath and two statuses
 
-The congregation worships on Saturday. The roll's default date is the Saturday of the current or coming week in Accra. A date after today can be opened, and it cannot be saved until that day. Only present and absent are recorded. Excused, late, and partial were dropped so the Sabbath screen stays a single choice.
+The congregation worships on Saturday. The roll defaults to the current Sabbath (latest Saturday on or before today in Accra). The next Saturday can be opened for preview and cannot be saved until it becomes current. Only present and absent are recorded. Excused, late, and partial were dropped so the Sabbath screen stays a single choice.
 
 ## Unrecorded is not absent
 
@@ -38,7 +42,7 @@ Children, parents, and login users are different records. A universal person tab
 
 ## Class moves with the academic year
 
-The class ladder is fixed, from Pre-school through SHS 3. The school is a name on the child. `ClassPlacement` keeps the class for each academic year. The open year defaults to 1 September through 31 August, and a coordinator can change those dates. When the end date has passed, the next signed-in request moves each active child up one class. SHS 3 does not move on. That check is a query on the request, in the same way birthday and missing-church lists are queries.
+The class ladder is fixed, from Pre-school through SHS 3. The school is a name on the child. `ClassPlacement` keeps the class for each academic year. The open year defaults to 1 September through 31 August, and teachers or coordinators can change those dates. When the end date has passed, the next signed-in request moves each active child up one class. SHS 3 does not move on. That check is a query on the request, in the same way birthday and missing-church lists are queries.
 
 ## Reminders are queries
 

@@ -3,7 +3,7 @@ from datetime import date
 from django.conf import settings
 from django.test import SimpleTestCase
 
-from apps.attendance.calendar import latest_sabbath_on_or_before, upcoming_sabbath
+from apps.attendance.calendar import current_sabbath, latest_sabbath_on_or_before, upcoming_sabbath
 
 
 class SabbathCalendarTests(SimpleTestCase):
@@ -37,6 +37,12 @@ class SabbathCalendarTests(SimpleTestCase):
         self.assertEqual(sunday.weekday(), 6)
         self.assertEqual(upcoming_sabbath(sunday), date(2026, 10, 10))
         self.assertEqual(latest_sabbath_on_or_before(sunday), date(2026, 10, 3))
+
+    def test_current_sabbath_stays_until_the_next_saturday(self):
+        self.assertEqual(current_sabbath(date(2026, 10, 3)), date(2026, 10, 3))
+        self.assertEqual(current_sabbath(date(2026, 10, 4)), date(2026, 10, 3))
+        self.assertEqual(current_sabbath(date(2026, 10, 9)), date(2026, 10, 3))
+        self.assertEqual(current_sabbath(date(2026, 10, 10)), date(2026, 10, 10))
 
     def test_month_boundary(self):
         friday = date(2026, 10, 30)

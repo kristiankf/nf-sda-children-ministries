@@ -7,7 +7,7 @@
     <p class="mt-2 text-sm text-muted">Sabbath attendance already recorded stays in the records.</p>
     <form class="mt-4 grid gap-2" method="post">
       {% csrf_token %}
-      <button class="btn-primary" type="submit">Graduate</button>
+      <button class="btn-primary" type="submit" data-loading-label="Graduating...">Graduate</button>
       <a class="btn-secondary" href="{{ child.get_absolute_url }}">Keep in Children's Ministries</a>
     </form>
   </div>

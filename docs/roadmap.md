@@ -1,6 +1,6 @@
 # Roadmap
 
-The current app covers children's records, guardians, classes, Sabbath attendance, birthdays, and simple CSV reports for New Fadama Seventh-day Adventist Church.
+The current app covers children's records, guardians, classes, Sabbath attendance (current and past), visitors, birthdays, and simple CSV reports for New Fadama Seventh-day Adventist Church. See [changelog.md](changelog.md) for dated notes.
 
 These items are not scheduled. They are recorded so they are not built by accident.
 

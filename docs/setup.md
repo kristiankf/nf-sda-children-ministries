@@ -19,7 +19,7 @@ When `web` is up:
 docker compose exec web python manage.py seed_dev_data
 ```
 
-The seed command loads fictional children, families, and Sabbath attendance relative to the latest Saturday on or before today. It refuses to run when `DEBUG` is off.
+The seed command loads fictional children, families, visitors, and Sabbath attendance relative to the latest Saturday on or before today. It refuses to run when `DEBUG` is off.
 
 ## Host ports
 

@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.views.generic import ListView, UpdateView
 
 from apps.children.models import Child
-from apps.schools.calendar import advance_academic_calendar
+from apps.schools.calendar import advance_academic_calendar, clear_open_year_cache
 from apps.schools.forms import AcademicYearForm
 from apps.schools.levels import ClassLevel
 from apps.schools.models import AcademicYear
@@ -49,6 +49,7 @@ class AcademicYearUpdateView(PermissionRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         saved = form.save()
+        clear_open_year_cache()
         current = advance_academic_calendar()
         if current.pk != saved.pk:
             messages.success(

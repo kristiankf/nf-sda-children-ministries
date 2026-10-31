@@ -2,13 +2,14 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
 from django.views.generic import TemplateView
 
-from apps.attendance.calendar import upcoming_sabbath
+from apps.attendance.calendar import current_sabbath
 from apps.attendance.stats import sabbath_stats
 from apps.attendance.streaks import missing_church
 from apps.children.birthdays import upcoming_birthdays
 from apps.children.groups import class_summary
 from apps.core import dates
 from apps.schools.models import AcademicYear
+from apps.visitors.follow_up import visitors_needing_follow_up
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -17,7 +18,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = dates.local_today()
-        sabbath = upcoming_sabbath(today)
+        sabbath = current_sabbath(today)
         class_counts, ready, oldest = class_summary(today)
         context.update(
             {
@@ -30,6 +31,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 "graduation_slug": oldest.slug if oldest else "",
                 "missing": missing_church(today, minimum=2)[:5],
                 "birthdays": upcoming_birthdays(today, within_days=30, limit=5),
+                "visitor_follow_up": visitors_needing_follow_up(limit=5),
                 "academic_year": AcademicYear.objects.filter(is_current=True).first(),
             }
         )

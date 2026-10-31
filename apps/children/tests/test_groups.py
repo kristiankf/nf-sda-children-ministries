@@ -75,14 +75,14 @@ class MinistryGroupTests(TestCase):
         self.assertEqual(child.status, Child.Status.INACTIVE)
         self.assertEqual(child.attendance_records.count(), 1)
 
-    def test_teacher_cannot_graduate_a_child(self):
+    def test_teacher_can_graduate_a_child(self):
         teacher = make_user("teacher", "TEACHER")
         child = make_child("Esi", "Boateng", date_of_birth=date(2010, 1, 1))
         self.client.force_login(teacher)
         response = self.client.post(reverse("children:graduate", args=[child.pk]))
-        self.assertEqual(response.status_code, 403)
+        self.assertRedirects(response, child.get_absolute_url())
         child.refresh_from_db()
-        self.assertEqual(child.status, Child.Status.ACTIVE)
+        self.assertEqual(child.status, Child.Status.INACTIVE)
 
     def test_coordinator_can_rename_a_sabbath_class(self):
         coordinator = make_user("coordinator", "COORDINATOR")
@@ -120,11 +120,11 @@ class MinistryGroupTests(TestCase):
         self.assertContains(response, "overlap")
         self.assertFalse(AgeGroup.objects.filter(slug="extra").exists())
 
-    def test_teacher_cannot_open_sabbath_classes(self):
+    def test_teacher_can_open_sabbath_classes(self):
         teacher = make_user("teacher", "TEACHER")
         self.client.force_login(teacher)
         response = self.client.get(reverse("sabbath_classes"))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
     def test_a_class_used_as_an_override_cannot_be_removed(self):
         coordinator = make_user("coordinator", "COORDINATOR")

@@ -160,8 +160,8 @@ def children_csv(request):
         base = [
             child.full_name,
             child.preferred_name,
-            child.age,
-            child.date_of_birth.isoformat(),
+            child.age if child.age is not None else "",
+            child.date_of_birth.isoformat() if child.date_of_birth else "",
             child.get_gender_display(),
             child.get_status_display(),
             format_phone(child.phone),
